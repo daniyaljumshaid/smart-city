@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'login_screen.dart';
-import 'signup_screen.dart';
-import 'splash_screen.dart';
-import 'emergency_screen.dart';
-import 'forgot_password_screen.dart';
-import 'city_analytics.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -26,13 +22,11 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     );
-    _opacity = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    );
-    _scale = Tween<double>(begin: 0.92, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _scale = Tween<double>(
+      begin: 0.92,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
     _controller.forward();
 
     Timer(const Duration(seconds: 3), () {

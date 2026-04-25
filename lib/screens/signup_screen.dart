@@ -56,7 +56,10 @@ class _SignupScreenState extends State<SignupScreen> {
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
                   child: Container(
                     width: contentWidth,
                     padding: const EdgeInsets.all(22),
@@ -179,7 +182,8 @@ class _SignupScreenState extends State<SignupScreen> {
                           trailing: IconButton(
                             onPressed: () {
                               setState(() {
-                                _obscureConfirmPassword = !_obscureConfirmPassword;
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
                               });
                             },
                             icon: Icon(
@@ -203,6 +207,13 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                             ),
                             onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Account created successfully. Please login.',
+                                  ),
+                                ),
+                              );
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(

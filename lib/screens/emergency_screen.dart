@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../complaint_store.dart';
 import 'location_screen.dart';
+import 'login_screen.dart';
 
 class EmergencyScreen extends StatelessWidget {
   const EmergencyScreen({super.key});
@@ -15,6 +17,19 @@ class EmergencyScreen extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            icon: const Icon(Icons.logout_rounded),
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -64,6 +79,11 @@ class EmergencyScreen extends StatelessWidget {
                   const SizedBox(height: 30),
                   GestureDetector(
                     onTap: () {
+                      ComplaintStore.pushNotification(
+                        message:
+                            'SOS alert created. Emergency Response Unit notified.',
+                        targetRole: UserRole.officer,
+                      );
                       showDialog<void>(
                         context: context,
                         builder: (context) => AlertDialog(
@@ -124,7 +144,10 @@ class EmergencyScreen extends StatelessWidget {
                   const SizedBox(height: 30),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 12,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       color: const Color(0xFFEAF4FF),
@@ -151,7 +174,11 @@ class EmergencyScreen extends StatelessWidget {
                           accent: const Color(0xFFDB3A3A),
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Nearby hospital services opened.')),
+                              const SnackBar(
+                                content: Text(
+                                  'Nearby hospital services opened.',
+                                ),
+                              ),
                             );
                           },
                         ),
@@ -165,7 +192,9 @@ class EmergencyScreen extends StatelessWidget {
                           accent: const Color(0xFF1769C1),
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Nearby police stations opened.')),
+                              const SnackBar(
+                                content: Text('Nearby police stations opened.'),
+                              ),
                             );
                           },
                         ),
@@ -187,11 +216,27 @@ class EmergencyScreen extends StatelessWidget {
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
+                        onPressed: () async {
+                          final location = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const LocationScreen(),
+                            ),
+                          );
+
+                          if (location == null) return;
+
+                          ComplaintStore.pushNotification(
+                            message: 'Citizen shared live location: $location',
+                            targetRole: UserRole.officer,
+                          );
+
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Live location shared with emergency team: $location',
+                              ),
                             ),
                           );
                         },

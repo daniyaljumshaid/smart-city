@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../complaint_store.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'ai_city_insights.dart';
 import 'complaint_tracking.dart';
+import 'login_screen.dart';
 
 class AnalysisDashboardScreen extends StatelessWidget {
   const AnalysisDashboardScreen({super.key});
@@ -21,6 +23,19 @@ class AnalysisDashboardScreen extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            icon: const Icon(Icons.logout_rounded),
+          ),
+        ],
       ),
 
       body: Container(
@@ -45,12 +60,17 @@ class AnalysisDashboardScreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.analytics_rounded, color: Color(0xFF0E5A92), size: 28),
+                    const Icon(
+                      Icons.analytics_rounded,
+                      color: Color(0xFF0E5A92),
+                      size: 28,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         "Live Complaint Intelligence",
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF14324A),
                             ),
@@ -68,10 +88,30 @@ class AnalysisDashboardScreen extends StatelessWidget {
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.35,
                 children: [
-                  summaryCard("$total", "Total", const Color(0xFF2B87D1), Icons.assignment_rounded),
-                  summaryCard("$resolved", "Resolved", const Color(0xFF2EAF63), Icons.task_alt_rounded),
-                  summaryCard("$pending", "Pending", const Color(0xFFF08B2D), Icons.pending_actions_rounded),
-                  summaryCard("$high", "High Priority", const Color(0xFFD84D4D), Icons.priority_high_rounded),
+                  summaryCard(
+                    "$total",
+                    "Total",
+                    const Color(0xFF2B87D1),
+                    Icons.assignment_rounded,
+                  ),
+                  summaryCard(
+                    "$resolved",
+                    "Resolved",
+                    const Color(0xFF2EAF63),
+                    Icons.task_alt_rounded,
+                  ),
+                  summaryCard(
+                    "$pending",
+                    "Pending",
+                    const Color(0xFFF08B2D),
+                    Icons.pending_actions_rounded,
+                  ),
+                  summaryCard(
+                    "$high",
+                    "High Priority",
+                    const Color(0xFFD84D4D),
+                    Icons.priority_high_rounded,
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -92,6 +132,7 @@ class AnalysisDashboardScreen extends StatelessWidget {
                     categoryTile("Road Damage", Icons.construction, complaints),
                     categoryTile("Garbage", Icons.delete, complaints),
                     categoryTile("Street Light", Icons.lightbulb, complaints),
+                    categoryTile("Water Leakage", Icons.water_drop, complaints),
                   ],
                 ),
               ),
@@ -109,6 +150,30 @@ class AnalysisDashboardScreen extends StatelessWidget {
                   },
                   icon: const Icon(Icons.track_changes_rounded),
                   label: const Text("Open Complaint Tracking"),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0x80FFFFFF)),
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AiCityInsightsScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.psychology_alt_rounded),
+                  label: const Text('Open AI Predictive Insights'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
                     side: const BorderSide(color: Color(0x80FFFFFF)),

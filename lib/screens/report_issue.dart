@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import 'location_screen.dart';
 import '../complaint_store.dart';
-//import 'dart:io';
-//import 'package:image_picker/image_picker.dart';
+import '../services/ai_engine.dart';
+import 'my_complaints_screen.dart';
 
 class ReportIssueScreen extends StatefulWidget {
   const ReportIssueScreen({super.key});
@@ -12,225 +15,417 @@ class ReportIssueScreen extends StatefulWidget {
 }
 
 class _ReportIssueScreenState extends State<ReportIssueScreen> {
-  String? selectedIssue;
-  String? selectedPriority;
-  String locationText = "Not Selected";
+  final TextEditingController _citizenNameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
 
-  TextEditingController descriptionController = TextEditingController();
+  String _selectedIssue = 'Auto Detect';
+  String _selectedPriority = 'AI Recommended';
+  String _locationText = 'Not Selected';
+  String _photoPath = '';
+  AiClassificationResult? _analysis;
+
   void showError(String msg) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(msg),
-      backgroundColor: Colors.red,
-    ),
-  );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade100,
 
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "Report An Issue",
-          style: TextStyle(color: Colors.black),
-        ),
-        centerTitle: true,
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: CircleAvatar(child: Icon(Icons.notifications)),
-          ),
-        ],
-      ),
+  Future<void> _pickImage() async {
+    final image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 72,
+    );
 
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    if (image == null) return;
 
-              // ISSUE TYPE
-              const Text("Issue Type"),
-              const SizedBox(height: 8),
+    setState(() {
+      _photoPath = image.path;
+    });
+  }
 
-              DropdownButtonFormField<String>(
-                value: selectedIssue,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                items: const [
-                  DropdownMenuItem(value: "Road Damage", child: Text("Road Damage")),
-                  DropdownMenuItem(value: "Garbage", child: Text("Garbage")),
-                  DropdownMenuItem(value: "Street Light", child: Text("Street Light")),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    selectedIssue = value;
-                  });
-                },
-              ),
+  void _runAiClassification() {
+    final text = _descriptionController.text.trim();
+    if (text.isEmpty) {
+      showError('Please enter complaint description for AI analysis.');
+      return;
+    }
 
-              const SizedBox(height: 20),
+    final result = SmartCityAiEngine.classifyComplaint(
+      description: text,
+      selectedCategory: _selectedIssue == 'Auto Detect' ? null : _selectedIssue,
+    );
 
-              // DESCRIPTION
-              const Text("Description"),
-              const SizedBox(height: 8),
+    setState(() {
+      _analysis = result;
+      if (_selectedPriority == 'AI Recommended') {
+        _selectedPriority = 'AI Recommended';
+      }
+    });
 
-              TextField(
-                controller: descriptionController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  hintText: "Describe the issue...",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // LOCATION
-              const Text("Select Location"),
-              const SizedBox(height: 10),
-
-              Container(
-                height: 120,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: Text(locationText),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LocationScreen(),
-                      ),
-                    );
-
-                    if (result != null) {
-                      setState(() {
-                        locationText = result;
-                      });
-                    }
-                  },
-                  icon: const Icon(Icons.map),
-                  label: const Text("Open Map"),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // PRIORITY
-              const Text("Priority"),
-              const SizedBox(height: 10),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  choiceButton("Low", Colors.green),
-                  choiceButton("Medium", Colors.orange),
-                  choiceButton("High", Colors.red),
-                ],
-              ),
-
-              const SizedBox(height: 30),
-
-              // SUBMIT BUTTON
-             SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-              onPressed: () {
-                if (selectedIssue == null) {
-                  showError("Please select issue type");
-                  return;
-                }
-                if (locationText == "Not Selected") {
-                 showError("Please select location");
-                 return;
-                }
-                if (locationText == "Not Selected") {
-                  showError("Please select location");
-                   return;
-                  }
-
-                if (selectedPriority == null) {
-                showError("Please select priority");
-                return;
-              }
-
-            ComplaintStore.complaints.add(
-            Complaint(
-            issueType: selectedIssue!,
-            description: descriptionController.text.isEmpty
-            ? "No description added"
-           : descriptionController.text,
-            priority: selectedPriority!,
-           location: locationText,
-    ),
-  );
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text("Complaint Submitted Successfully")),
-  );
-
-  Navigator.pop(context);
-},
-    child: const Text(
-      "Submit Complaint",
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-  ),
-),
-            ],
-          ),
-        ),
-      ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('AI classification completed.')),
     );
   }
 
-  Widget choiceButton(String text, Color color) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor:
-            selectedPriority == text ? color : Colors.grey.shade300,
-        foregroundColor:
-            selectedPriority == text ? Colors.white : Colors.black,
+  int _etaWithPriority(AiClassificationResult result, String priority) {
+    if (priority == result.priority) return result.etaHours;
+    if (priority == 'High') return (result.etaHours * 0.70).round();
+    if (priority == 'Medium') return result.etaHours;
+    return (result.etaHours * 1.45).round();
+  }
+
+  void _submitComplaint() {
+    if (_locationText == 'Not Selected') {
+      showError('Please select location');
+      return;
+    }
+
+    if (_descriptionController.text.trim().isEmpty) {
+      showError('Please enter complaint description');
+      return;
+    }
+
+    final aiResult =
+        _analysis ??
+        SmartCityAiEngine.classifyComplaint(
+          description: _descriptionController.text.trim(),
+          selectedCategory: _selectedIssue == 'Auto Detect'
+              ? null
+              : _selectedIssue,
+        );
+
+    final finalPriority = _selectedPriority == 'AI Recommended'
+        ? aiResult.priority
+        : _selectedPriority;
+
+    final complaint = Complaint(
+      citizenName: _citizenNameController.text.trim().isEmpty
+          ? 'Citizen'
+          : _citizenNameController.text.trim(),
+      issueType: aiResult.category,
+      description: _descriptionController.text.trim(),
+      priority: finalPriority,
+      location: _locationText,
+      status: 'Pending',
+      urgencyScore: aiResult.urgencyScore,
+      department: aiResult.department,
+      assignedOfficer: '${aiResult.department} Queue',
+      estimatedHours: _etaWithPriority(aiResult, finalPriority),
+      imagePath: _photoPath.isEmpty ? null : _photoPath,
+      updates: [
+        ComplaintUpdate(
+          status: 'Pending',
+          note: aiResult.reasoning,
+          by: 'System AI',
+        ),
+      ],
+    );
+
+    ComplaintStore.addComplaint(complaint);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Complaint ${complaint.id} submitted and auto-assigned to ${complaint.department}.',
+        ),
       ),
-      onPressed: () {
-        setState(() {
-          selectedPriority = text;
-        });
-      },
-      child: Text(text),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const MyComplaintsScreen()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _citizenNameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('AI Complaint Reporting'),
+        centerTitle: true,
+        actions: [
+          TextButton.icon(
+            onPressed: _runAiClassification,
+            icon: const Icon(Icons.psychology_alt_rounded),
+            label: const Text('Analyze'),
+          ),
+        ],
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0F2A43), Color(0xFF184E77), Color(0xFF1D6FA5)],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Complaint & Issue Reporting',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'AI automatically classifies category, urgency, and department assignment.',
+                  style: TextStyle(color: Color(0xFF5A7288)),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _citizenNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Citizen Name',
+                    hintText: 'Enter your name',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _selectedIssue,
+                  decoration: const InputDecoration(
+                    labelText: 'Issue Category',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Auto Detect',
+                      child: Text('Auto Detect by AI'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Road Damage',
+                      child: Text('Road Damage'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Water Leakage',
+                      child: Text('Water Leakage'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Street Light',
+                      child: Text('Street Light Issue'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Garbage',
+                      child: Text('Garbage Issue'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Emergency',
+                      child: Text('Emergency'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      _selectedIssue = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _descriptionController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    hintText: 'Describe the issue in detail',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedPriority,
+                        decoration: const InputDecoration(
+                          labelText: 'Priority',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'AI Recommended',
+                            child: Text('AI Recommended'),
+                          ),
+                          DropdownMenuItem(value: 'Low', child: Text('Low')),
+                          DropdownMenuItem(
+                            value: 'Medium',
+                            child: Text('Medium'),
+                          ),
+                          DropdownMenuItem(value: 'High', child: Text('High')),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setState(() {
+                            _selectedPriority = value;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _pickImage,
+                        icon: const Icon(Icons.image_outlined),
+                        label: Text(
+                          _photoPath.isEmpty ? 'Upload Photo' : 'Photo Added',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_photoPath.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: kIsWeb
+                        ? Container(
+                            height: 150,
+                            width: double.infinity,
+                            color: const Color(0xFFF3F8FE),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'Image preview is supported on mobile/desktop apps.',
+                              style: TextStyle(color: Color(0xFF4F677A)),
+                            ),
+                          )
+                        : Image.file(
+                            File(_photoPath),
+                            height: 150,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) {
+                              return Container(
+                                height: 150,
+                                width: double.infinity,
+                                color: const Color(0xFFF3F8FE),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  'Unable to load selected image.',
+                                  style: TextStyle(color: Color(0xFF4F677A)),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F8FE),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Tagged Location: $_locationText',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LocationScreen(
+                            initialLocationText: _locationText,
+                          ),
+                        ),
+                      );
+
+                      if (result == null) return;
+                      setState(() {
+                        _locationText = result as String;
+                      });
+                    },
+                    icon: const Icon(Icons.location_on_rounded),
+                    label: const Text('Tag Location'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _runAiClassification,
+                    icon: const Icon(Icons.psychology_alt_rounded),
+                    label: const Text('Run AI Classification'),
+                  ),
+                ),
+                if (_analysis != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: const Color(0xFFEAF4FF),
+                      border: Border.all(color: const Color(0xFFBFDDF8)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'AI Classification Output',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF144062),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text('Category: ${_analysis!.category}'),
+                        Text('Priority: ${_analysis!.priority}'),
+                        Text(
+                          'Urgency Score: ${(_analysis!.urgencyScore * 100).toStringAsFixed(0)}%',
+                        ),
+                        Text('Department: ${_analysis!.department}'),
+                        Text(
+                          'Estimated Resolution Time: ${_analysis!.etaHours}h',
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Signals: ${_analysis!.matchedSignals.isEmpty ? 'No strong keywords' : _analysis!.matchedSignals.join(', ')}',
+                          style: const TextStyle(color: Color(0xFF35576F)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _submitComplaint,
+                    icon: const Icon(Icons.send_rounded),
+                    label: const Text('Submit Complaint'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F609B),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

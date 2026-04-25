@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 import '../complaint_store.dart';
+import 'location_screen.dart';
+import 'login_screen.dart';
+import 'notifications_screen.dart';
+import 'report_issue.dart';
 
 class ComplaintTrackingScreen extends StatelessWidget {
   const ComplaintTrackingScreen({super.key});
@@ -18,6 +24,41 @@ class ComplaintTrackingScreen extends StatelessWidget {
           style: TextStyle(color: Colors.black),
         ),
         iconTheme: const IconThemeData(color: Colors.black),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const NotificationsScreen(role: UserRole.citizen),
+                ),
+              );
+            },
+            icon: const Icon(Icons.notifications_active_outlined),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ReportIssueScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.add_circle_outline_rounded),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            icon: const Icon(Icons.logout_rounded),
+          ),
+        ],
       ),
 
       body: Container(
@@ -37,20 +78,47 @@ class ComplaintTrackingScreen extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(18),
                   ),
-                  child: const Column(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.inbox_rounded, size: 44, color: Color(0xFF0E5A92)),
-                      SizedBox(height: 10),
+                      const Icon(
+                        Icons.inbox_rounded,
+                        size: 44,
+                        color: Color(0xFF0E5A92),
+                      ),
+                      const SizedBox(height: 10),
                       Text(
                         "No Complaints Submitted Yet",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         "Submit a complaint to start tracking progress.",
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Color(0xFF5A7288)),
+                        style: const TextStyle(color: Color(0xFF5A7288)),
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ReportIssueScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.report_problem_outlined),
+                          label: const Text('Report an Issue'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F609B),
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -155,6 +223,76 @@ class ComplaintTrackingScreen extends StatelessWidget {
                                 style: const TextStyle(color: Colors.grey),
                               ),
                             ),
+                            IconButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LocationScreen(
+                                      initialLocationText: complaint.location,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.map_rounded,
+                                size: 20,
+                                color: Color(0xFF0F609B),
+                              ),
+                              tooltip: 'Open on map',
+                            ),
+                          ],
+                        ),
+                        if (complaint.imagePath != null) ...[
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: kIsWeb
+                                ? Container(
+                                    height: 150,
+                                    width: double.infinity,
+                                    color: const Color(0xFFF2F7FE),
+                                    alignment: Alignment.center,
+                                    child: const Text(
+                                      'Image preview is supported on mobile/desktop apps.',
+                                      style: TextStyle(
+                                        color: Color(0xFF4F677A),
+                                      ),
+                                    ),
+                                  )
+                                : Image.file(
+                                    File(complaint.imagePath!),
+                                    height: 150,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) {
+                                      return Container(
+                                        height: 150,
+                                        width: double.infinity,
+                                        color: const Color(0xFFF2F7FE),
+                                        alignment: Alignment.center,
+                                        child: const Text(
+                                          'Unable to load uploaded complaint image.',
+                                          style: TextStyle(
+                                            color: Color(0xFF4F677A),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _metaChip('Dept: ${complaint.department}'),
+                            _metaChip('Officer: ${complaint.assignedOfficer}'),
+                            _metaChip('ETA: ${complaint.estimatedHours}h'),
+                            _metaChip(
+                              'Urgency: ${(complaint.urgencyScore * 100).toStringAsFixed(0)}%',
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -163,9 +301,7 @@ class ComplaintTrackingScreen extends StatelessWidget {
                           children: [
                             const Text(
                               "Status",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -186,12 +322,97 @@ class ComplaintTrackingScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 10),
+                        ExpansionTile(
+                          tilePadding: EdgeInsets.zero,
+                          title: const Text(
+                            'Progress Timeline',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          children: complaint.updates
+                              .map(
+                                (update) => ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: Icon(
+                                    Icons.fiber_manual_record,
+                                    size: 12,
+                                    color: statusColor,
+                                  ),
+                                  title: Text(update.status),
+                                  subtitle: Text(
+                                    '${update.note}\nBy: ${update.by}',
+                                  ),
+                                  trailing: update.evidencePath == null
+                                      ? null
+                                      : const Icon(
+                                          Icons.image_rounded,
+                                          color: Color(0xFF0F609B),
+                                        ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                        ...complaint.updates
+                            .where((update) => update.evidencePath != null)
+                            .take(1)
+                            .map(
+                              (update) => Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: kIsWeb
+                                      ? Container(
+                                          height: 120,
+                                          width: double.infinity,
+                                          color: const Color(0xFFF2F7FE),
+                                          alignment: Alignment.center,
+                                          child: const Text(
+                                            'Evidence preview on mobile/desktop apps.',
+                                            style: TextStyle(
+                                              color: Color(0xFF4F677A),
+                                            ),
+                                          ),
+                                        )
+                                      : Image.file(
+                                          File(update.evidencePath!),
+                                          height: 120,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) {
+                                            return Container(
+                                              height: 120,
+                                              width: double.infinity,
+                                              color: const Color(0xFFF2F7FE),
+                                              alignment: Alignment.center,
+                                              child: const Text(
+                                                'Unable to load evidence image.',
+                                                style: TextStyle(
+                                                  color: Color(0xFF4F677A),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                ),
+                              ),
+                            ),
                       ],
                     ),
                   );
                 },
               ),
       ),
+    );
+  }
+
+  Widget _metaChip(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F7FF),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(text, style: const TextStyle(fontSize: 12)),
     );
   }
 }

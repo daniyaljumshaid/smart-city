@@ -11,20 +11,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:classicon_vs_code/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('App opens splash and navigates to login', (
+    WidgetTester tester,
+  ) async {
+    // Build the app and verify splash is shown first.
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.byType(MaterialApp), findsOneWidget);
+    expect(find.text('Smart City'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Advance fake time so the splash timer completes and navigation occurs.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Welcome back'), findsOneWidget);
   });
 }

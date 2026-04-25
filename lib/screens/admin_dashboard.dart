@@ -1,0 +1,580 @@
+import 'package:flutter/material.dart';
+
+import '../complaint_store.dart';
+import 'ai_city_insights.dart';
+import 'city_analytics.dart';
+import 'community_section.dart';
+import 'complaint_tracking.dart';
+import 'login_screen.dart';
+import 'officer_dashboard.dart';
+
+class AdminDashboardScreen extends StatelessWidget {
+  const AdminDashboardScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final complaints = ComplaintStore.complaints;
+    final total = complaints.length;
+    final resolved = complaints.where((c) => c.status == 'Resolved').length;
+    final resolvedRate = total == 0 ? 0 : ((resolved / total) * 100).round();
+    final avgFixTime = _averageFixHours(complaints);
+    final departmentStats = _departmentPerformance(complaints);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF3F7FC),
+      appBar: AppBar(
+        title: const Text('Admin Dashboard'),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            icon: const Icon(Icons.logout_rounded, color: Colors.black),
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 880;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _titleStrip(),
+                const SizedBox(height: 12),
+                _headerBar(),
+                const SizedBox(height: 12),
+                _tabStrip(context),
+                const SizedBox(height: 14),
+                if (isNarrow) ...[
+                  _cityOverviewCard(
+                    total: total,
+                    resolvedRate: resolvedRate,
+                    avgFixTime: avgFixTime,
+                  ),
+                  const SizedBox(height: 10),
+                  _aiInsightsCard(),
+                ] else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _cityOverviewCard(
+                          total: total,
+                          resolvedRate: resolvedRate,
+                          avgFixTime: avgFixTime,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(child: _aiInsightsCard()),
+                    ],
+                  ),
+                const SizedBox(height: 14),
+                if (isNarrow) ...[
+                  _heatMapCard(context),
+                  const SizedBox(height: 10),
+                  _departmentCard(departmentStats),
+                ] else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 6, child: _heatMapCard(context)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 5,
+                        child: _departmentCard(departmentStats),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 14),
+                _quickFlowCard(context),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _titleStrip() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFCAD5E2)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Text(
+        '5. Admin: Main Dashboard',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 21),
+      ),
+    );
+  }
+
+  Widget _headerBar() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFF0F2238), width: 1.2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Row(
+        children: [
+          Expanded(
+            child: Text(
+              'SMART CITY ADMIN',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+            ),
+          ),
+          Icon(Icons.search_rounded, size: 18),
+          SizedBox(width: 4),
+          Text(
+            '[Search...] [Admin]',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          SizedBox(width: 4),
+          Icon(Icons.admin_panel_settings_rounded, size: 18),
+        ],
+      ),
+    );
+  }
+
+  Widget _tabStrip(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFC5D1DD)),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _tabButton(label: 'Overview', active: true, onTap: () {}),
+          _tabButton(
+            label: 'Complaints',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ComplaintTrackingScreen(),
+                ),
+              );
+            },
+          ),
+          _tabButton(
+            label: 'Departments',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OfficerDashboardScreen(),
+                ),
+              );
+            },
+          ),
+          _tabButton(
+            label: 'AI Insights',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AiCityInsightsScreen(),
+                ),
+              );
+            },
+          ),
+          _tabButton(
+            label: 'Users',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CommunitySectionScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tabButton({
+    required String label,
+    bool active = false,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFF102A42) : const Color(0xFFF6FAFF),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: active ? const Color(0xFF102A42) : const Color(0xFFCCD7E3),
+          ),
+        ),
+        child: Text(
+          '[$label]',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: active ? Colors.white : const Color(0xFF1C354B),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _cityOverviewCard({
+    required int total,
+    required int resolvedRate,
+    required int avgFixTime,
+  }) {
+    return _wirePanel(
+      title: 'CITY OVERVIEW',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Total Issues: $total', style: const TextStyle(fontSize: 15)),
+          const SizedBox(height: 5),
+          Text(
+            'Resolved: $resolvedRate%',
+            style: const TextStyle(fontSize: 15),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Avg Fix Time: ${avgFixTime} hrs',
+            style: const TextStyle(fontSize: 15),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _aiInsightsCard() {
+    return _wirePanel(
+      title: 'AI PREDICTIONS & INSIGHTS',
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _InsightRow(
+            icon: Icons.warning_amber_rounded,
+            text: 'High accident zone detected in Sector 4.',
+          ),
+          SizedBox(height: 8),
+          _InsightRow(
+            icon: Icons.water_drop_rounded,
+            text: 'Water leakage trend rising in Downtown.',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _heatMapCard(BuildContext context) {
+    return _wirePanel(
+      title: 'COMPLAINT HEAT MAP',
+      child: Column(
+        children: [
+          Container(
+            height: 190,
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFFFF0DB),
+                  Color(0xFFFFE0BF),
+                  Color(0xFFFFD0A3),
+                ],
+              ),
+              border: Border.all(color: const Color(0xFFE2B78B)),
+            ),
+            child: Stack(
+              children: [
+                GridView.builder(
+                  itemCount: 49,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    crossAxisSpacing: 5,
+                    mainAxisSpacing: 5,
+                  ),
+                  itemBuilder: (context, index) {
+                    final intensity = (index % 9) / 8;
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Color.lerp(
+                          const Color(0xFFFFE3BF),
+                          const Color(0xFFFF6D2D),
+                          intensity,
+                        ),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    );
+                  },
+                ),
+                const Center(
+                  child: Text(
+                    '[ Map showing high-density issue areas ]',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF5D3E26),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CityAnalyticsScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.map_rounded),
+              label: const Text('Open City Analytics'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0F609B),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _departmentCard(List<_DepartmentStat> stats) {
+    return _wirePanel(
+      title: 'DEPARTMENT PERFORMANCE',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < stats.length; i++)
+            Padding(
+              padding: EdgeInsets.only(bottom: i == stats.length - 1 ? 0 : 11),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${i + 1}. ',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  Expanded(
+                    child: Text(
+                      '${stats[i].label}: ${stats[i].score}% Resolution Rate',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  if (stats[i].alert)
+                    const Icon(
+                      Icons.notifications_active_rounded,
+                      size: 18,
+                      color: Color(0xFFB8860B),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _quickFlowCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF102A42),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _flowButton(
+            context,
+            label: 'Open Complaints',
+            icon: Icons.track_changes_rounded,
+            destination: const ComplaintTrackingScreen(),
+          ),
+          _flowButton(
+            context,
+            label: 'Officer Dashboard',
+            icon: Icons.badge_rounded,
+            destination: const OfficerDashboardScreen(),
+          ),
+          _flowButton(
+            context,
+            label: 'AI Insights',
+            icon: Icons.psychology_alt_rounded,
+            destination: const AiCityInsightsScreen(),
+          ),
+          _flowButton(
+            context,
+            label: 'City Analytics',
+            icon: Icons.query_stats_rounded,
+            destination: const CityAnalyticsScreen(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _flowButton(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required Widget destination,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => destination),
+        );
+      },
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: const BorderSide(color: Color(0x99FFFFFF)),
+      ),
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+    );
+  }
+
+  Widget _wirePanel({required String title, required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFBFCAD8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF20384E),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          child,
+        ],
+      ),
+    );
+  }
+
+  int _averageFixHours(List<Complaint> complaints) {
+    if (complaints.isEmpty) return 0;
+    final total = complaints.fold<int>(
+      0,
+      (sum, complaint) => sum + complaint.estimatedHours,
+    );
+    return (total / complaints.length).round();
+  }
+
+  List<_DepartmentStat> _departmentPerformance(List<Complaint> complaints) {
+    int scoreFor(String keyword, int fallback) {
+      final bucket = complaints
+          .where(
+            (complaint) => complaint.department.toLowerCase().contains(keyword),
+          )
+          .toList();
+
+      if (bucket.isEmpty) return fallback;
+
+      final resolved = bucket
+          .where((complaint) => complaint.status == 'Resolved')
+          .length;
+      if (resolved == 0) return fallback;
+
+      return ((resolved / bucket.length) * 100).round().clamp(60, 98);
+    }
+
+    return [
+      _DepartmentStat(label: 'Water Dept', score: scoreFor('water', 92)),
+      _DepartmentStat(label: 'Waste Mgmt', score: scoreFor('waste', 88)),
+      _DepartmentStat(
+        label: 'Road Auth',
+        score: scoreFor('road', 75),
+        alert: true,
+      ),
+    ];
+  }
+}
+
+class _InsightRow extends StatelessWidget {
+  const _InsightRow({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFF0E5A92)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DepartmentStat {
+  const _DepartmentStat({
+    required this.label,
+    required this.score,
+    this.alert = false,
+  });
+
+  final String label;
+  final int score;
+  final bool alert;
+}

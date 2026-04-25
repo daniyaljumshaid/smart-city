@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'citizen_dashboard.dart';
+import 'officer_dashboard.dart';
+import 'admin_dashboard.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -12,6 +14,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
+  String _selectedRole = 'Citizen';
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +60,10 @@ class _LoginScreenState extends State<LoginScreen> {
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
                   child: Container(
                     width: contentWidth,
                     padding: const EdgeInsets.all(22),
@@ -83,7 +89,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(24),
                               color: const Color(0xFFEAF4FF),
-                              border: Border.all(color: const Color(0xFFBFDCF7)),
+                              border: Border.all(
+                                color: const Color(0xFFBFDCF7),
+                              ),
                             ),
                             child: Image.asset(
                               'assets/images/smart_city.jpg',
@@ -169,6 +177,47 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Role',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF23435C),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          value: _selectedRole,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.badge_outlined),
+                            filled: true,
+                            fillColor: const Color(0xFFF3F8FE),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Citizen',
+                              child: Text('Citizen'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Government Officer',
+                              child: Text('Government Officer'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Admin',
+                              child: Text('Admin'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() {
+                              _selectedRole = value;
+                            });
+                          },
+                        ),
                         const SizedBox(height: 12),
                         Align(
                           alignment: Alignment.centerRight,
@@ -177,7 +226,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ForgotPasswordScreen(),
+                                  builder: (context) =>
+                                      const ForgotPasswordScreen(),
                                 ),
                               );
                             },
@@ -201,10 +251,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             onPressed: () {
+                              final Widget destination;
+                              if (_selectedRole == 'Citizen') {
+                                destination = const CitizenDashboard();
+                              } else if (_selectedRole ==
+                                  'Government Officer') {
+                                destination = const OfficerDashboardScreen();
+                              } else {
+                                destination = const AdminDashboardScreen();
+                              }
+
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const CitizenDashboard(),
+                                  builder: (context) => destination,
                                 ),
                               );
                             },
@@ -230,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => SignupScreen(),
+                                    builder: (context) => const SignupScreen(),
                                   ),
                                 );
                               },

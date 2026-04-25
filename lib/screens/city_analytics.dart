@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../complaint_store.dart';
 import 'analysis_dashboard.dart';
+import 'ai_city_insights.dart';
 import 'complaint_tracking.dart';
+import 'login_screen.dart';
 
 class CityAnalyticsScreen extends StatelessWidget {
   const CityAnalyticsScreen({super.key});
@@ -10,12 +12,17 @@ class CityAnalyticsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final complaints = ComplaintStore.complaints;
+    final issueCounts = ComplaintStore.issueTypeCounts();
+    final hotspotEntries = ComplaintStore.areaHotspots().entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
     final total = complaints.length;
     final resolved = complaints.where((c) => c.status == 'Resolved').length;
     final pending = (total - resolved).clamp(0, total);
-    final road = complaints.where((c) => c.issueType == 'Road Damage').length;
-    final garbage = complaints.where((c) => c.issueType == 'Garbage').length;
-    final utilities = complaints.where((c) => c.issueType == 'Street Light').length;
+    final road = issueCounts['Road Damage'] ?? 0;
+    final garbage = issueCounts['Garbage'] ?? 0;
+    final utilities = issueCounts['Street Light'] ?? 0;
+    final water = issueCounts['Water Leakage'] ?? 0;
     final infrastructure = complaints.where((c) => c.priority == 'High').length;
     final under24h = (resolved * 0.72).round();
     final over24h = resolved - under24h;
@@ -26,6 +33,19 @@ class CityAnalyticsScreen extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            icon: const Icon(Icons.logout_rounded),
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -49,7 +69,11 @@ class CityAnalyticsScreen extends StatelessWidget {
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.query_stats_rounded, color: Color(0xFF0E5A92), size: 24),
+                      Icon(
+                        Icons.query_stats_rounded,
+                        color: Color(0xFF0E5A92),
+                        size: 24,
+                      ),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -81,27 +105,53 @@ class CityAnalyticsScreen extends StatelessWidget {
                                   gridData: const FlGridData(show: false),
                                   titlesData: const FlTitlesData(show: false),
                                   barGroups: [
-                                    _bar(0, road.toDouble(), const Color(0xFF2B87D1)),
-                                    _bar(1, garbage.toDouble(), const Color(0xFF2EAF63)),
-                                    _bar(2, utilities.toDouble(), const Color(0xFFF08B2D)),
-                                    _bar(3, infrastructure.toDouble(), const Color(0xFFD84D4D)),
+                                    _bar(
+                                      0,
+                                      road.toDouble(),
+                                      const Color(0xFF2B87D1),
+                                    ),
+                                    _bar(
+                                      1,
+                                      garbage.toDouble(),
+                                      const Color(0xFF2EAF63),
+                                    ),
+                                    _bar(
+                                      2,
+                                      utilities.toDouble(),
+                                      const Color(0xFFF08B2D),
+                                    ),
+                                    _bar(
+                                      3,
+                                      water.toDouble(),
+                                      const Color(0xFF00A0C8),
+                                    ),
+                                    _bar(
+                                      4,
+                                      infrastructure.toDouble(),
+                                      const Color(0xFFD84D4D),
+                                    ),
                                   ],
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.bar_chart_rounded, size: 30, color: Color(0xFF0E5A92)),
+                          const Icon(
+                            Icons.bar_chart_rounded,
+                            size: 30,
+                            color: Color(0xFF0E5A92),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 10),
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          Text('Traffic'),
+                          Text('Road'),
                           Text('Waste'),
-                          Text('Utilities'),
-                          Text('Infrastructure'),
+                          Text('Light'),
+                          Text('Water'),
+                          Text('High'),
                         ],
                       ),
                     ],
@@ -121,7 +171,11 @@ class CityAnalyticsScreen extends StatelessWidget {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFFFFEDD6), Color(0xFFFFD3A3), Color(0xFFFFB477)],
+                                  colors: [
+                                    Color(0xFFFFEDD6),
+                                    Color(0xFFFFD3A3),
+                                    Color(0xFFFFB477),
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -159,14 +213,22 @@ class CityAnalyticsScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Text('Downtown'),
-                          Text('Central Park'),
-                          Text('North River'),
-                          Text('East End'),
-                        ],
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: hotspotEntries.take(4).map((entry) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFEAD2),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text('${entry.key} (${entry.value})'),
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
@@ -193,14 +255,25 @@ class CityAnalyticsScreen extends StatelessWidget {
                                       barWidth: 3,
                                       belowBarData: BarAreaData(
                                         show: true,
-                                        color: const Color(0xFF0E5A92).withValues(alpha: 0.15),
+                                        color: const Color(
+                                          0xFF0E5A92,
+                                        ).withValues(alpha: 0.15),
                                       ),
                                       dotData: const FlDotData(show: false),
                                       spots: [
                                         FlSpot(0, (pending + 1).toDouble()),
-                                        FlSpot(1, (pending * 0.8 + 1).toDouble()),
-                                        FlSpot(2, (pending * 0.6 + 1).toDouble()),
-                                        FlSpot(3, (pending * 0.35 + 1).toDouble()),
+                                        FlSpot(
+                                          1,
+                                          (pending * 0.8 + 1).toDouble(),
+                                        ),
+                                        FlSpot(
+                                          2,
+                                          (pending * 0.6 + 1).toDouble(),
+                                        ),
+                                        FlSpot(
+                                          3,
+                                          (pending * 0.35 + 1).toDouble(),
+                                        ),
                                         FlSpot(4, (over24h + 1).toDouble()),
                                         FlSpot(5, (under24h + 1).toDouble()),
                                       ],
@@ -211,7 +284,11 @@ class CityAnalyticsScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.show_chart_rounded, size: 30, color: Color(0xFF0E5A92)),
+                          const Icon(
+                            Icons.show_chart_rounded,
+                            size: 30,
+                            color: Color(0xFF0E5A92),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 10),
@@ -239,12 +316,18 @@ class CityAnalyticsScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Total Complaints: $total',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         'Resolved Complaints: $resolved',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -255,7 +338,8 @@ class CityAnalyticsScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const AnalysisDashboardScreen(),
+                                    builder: (context) =>
+                                        const AnalysisDashboardScreen(),
                                   ),
                                 );
                               },
@@ -264,7 +348,9 @@ class CityAnalyticsScreen extends StatelessWidget {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF0F609B),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -278,14 +364,17 @@ class CityAnalyticsScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const ComplaintTrackingScreen(),
+                                    builder: (context) =>
+                                        const ComplaintTrackingScreen(),
                                   ),
                                 );
                               },
                               icon: const Icon(Icons.track_changes_rounded),
                               label: const Text('Tracking'),
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -293,6 +382,23 @@ class CityAnalyticsScreen extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const AiCityInsightsScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.psychology_alt_rounded),
+                          label: const Text('AI Predictive Insights'),
+                        ),
                       ),
                     ],
                   ),
