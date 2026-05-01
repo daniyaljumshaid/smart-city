@@ -4,9 +4,7 @@ import 'analysis_dashboard.dart';
 import 'report_issue.dart';
 import 'location_screen.dart';
 import 'emergency_screen.dart';
-import 'community_section.dart';
 import 'notifications_screen.dart';
-import 'ai_city_insights.dart';
 import 'login_screen.dart';
 import 'my_complaints_screen.dart';
 
@@ -290,52 +288,7 @@ class CitizenDashboard extends StatelessWidget {
                       );
                     },
                   ),
-                  dashboardCard(
-                    context,
-                    icon: Icons.groups_2_rounded,
-                    title: 'Community',
-                    subtitle: 'Polls and city discussion',
-                    color: const Color(0xFF2EAF63),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CommunitySectionScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  dashboardCard(
-                    context,
-                    icon: Icons.notifications_active_rounded,
-                    title: 'Notifications',
-                    subtitle: 'Case updates and alerts',
-                    color: const Color(0xFF0F609B),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const NotificationsScreen(role: UserRole.citizen),
-                        ),
-                      );
-                    },
-                  ),
-                  dashboardCard(
-                    context,
-                    icon: Icons.psychology_alt_rounded,
-                    title: 'AI Insights',
-                    subtitle: 'Predicted risk and trends',
-                    color: const Color(0xFF0E9A6C),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AiCityInsightsScreen(),
-                        ),
-                      );
-                    },
-                  ),
+
                 ],
               ),
 

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../complaint_store.dart';
 import 'ai_city_insights.dart';
 import 'city_analytics.dart';
-import 'community_section.dart';
 import 'complaint_tracking.dart';
 import 'login_screen.dart';
 import 'officer_dashboard.dart';
@@ -96,8 +95,6 @@ class AdminDashboardScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                const SizedBox(height: 14),
-                _quickFlowCard(context),
               ],
             );
           },
@@ -203,14 +200,10 @@ class AdminDashboardScreen extends StatelessWidget {
           _tabButton(
             label: 'Users',
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CommunitySectionScreen(),
-                ),
-              );
+              _showUsersModal(context);
             },
           ),
+
         ],
       ),
     );
@@ -413,69 +406,6 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _quickFlowCard(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF102A42),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          _flowButton(
-            context,
-            label: 'Open Complaints',
-            icon: Icons.track_changes_rounded,
-            destination: const ComplaintTrackingScreen(),
-          ),
-          _flowButton(
-            context,
-            label: 'Officer Dashboard',
-            icon: Icons.badge_rounded,
-            destination: const OfficerDashboardScreen(),
-          ),
-          _flowButton(
-            context,
-            label: 'AI Insights',
-            icon: Icons.psychology_alt_rounded,
-            destination: const AiCityInsightsScreen(),
-          ),
-          _flowButton(
-            context,
-            label: 'City Analytics',
-            icon: Icons.query_stats_rounded,
-            destination: const CityAnalyticsScreen(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _flowButton(
-    BuildContext context, {
-    required String label,
-    required IconData icon,
-    required Widget destination,
-  }) {
-    return OutlinedButton.icon(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => destination),
-        );
-      },
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        side: const BorderSide(color: Color(0x99FFFFFF)),
-      ),
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-    );
-  }
-
   Widget _wirePanel({required String title, required Widget child}) {
     return Container(
       width: double.infinity,
@@ -540,6 +470,88 @@ class AdminDashboardScreen extends StatelessWidget {
         alert: true,
       ),
     ];
+  }
+
+  void _showUsersModal(BuildContext context) {
+    final complaints = ComplaintStore.complaints;
+    final citizens = <String>{};
+    final officers = <String>{};
+
+    for (var complaint in complaints) {
+      citizens.add(complaint.citizenName);
+      if (complaint.assignedOfficer != 'Unassigned') {
+        officers.add(complaint.assignedOfficer);
+      }
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('App Users'),
+        content: SizedBox(
+          width: 400,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Citizens:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                if (citizens.isEmpty)
+                  const Text('No citizens found')
+                else
+                  ...citizens.map(
+                    (citizen) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F4F9),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text('• $citizen'),
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Government Officers:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                if (officers.isEmpty)
+                  const Text('No officers assigned')
+                else
+                  ...officers.map(
+                    (officer) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F4F9),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text('• $officer'),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
