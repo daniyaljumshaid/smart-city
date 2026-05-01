@@ -18,8 +18,28 @@ class MyComplaintsScreen extends StatefulWidget {
   State<MyComplaintsScreen> createState() => _MyComplaintsScreenState();
 }
 
-class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
+class _MyComplaintsScreenState extends State<MyComplaintsScreen>
+    with WidgetsBindingObserver {
   ComplaintFilter _selectedFilter = ComplaintFilter.all;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +81,12 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
                   builder: (context) =>
                       const NotificationsScreen(role: UserRole.citizen),
                 ),
-              );
+              ).then((_) {
+                // Rebuild when returning from notifications
+                if (mounted) {
+                  setState(() {});
+                }
+              });
             },
             icon: Stack(
               clipBehavior: Clip.none,
@@ -295,6 +320,21 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
               _summaryChip('Resolved', resolved, const Color(0xFF1C8C45)),
             ],
           ),
+          if (_selectedFilter != ComplaintFilter.all) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _selectedFilter = ComplaintFilter.all;
+                  });
+                },
+                icon: const Icon(Icons.filter_alt_off_rounded),
+                label: const Text('Clear filter'),
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Text(
             statusLine,
@@ -414,29 +454,36 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
 
   Widget _filterChip(ComplaintFilter value, String label) {
     final selected = _selectedFilter == value;
-    return Tooltip(
-      message: 'Show $label complaints',
-      child: ChoiceChip(
-        label: Text(label),
-        selected: selected,
-        onSelected: (_) {
-          setState(() {
-            _selectedFilter = value;
-          });
-        },
-        showCheckmark: false,
-        selectedColor: const Color(0xFF102D45),
-        backgroundColor: Colors.white,
-        labelStyle: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
-          color: selected ? Colors.white : const Color(0xFF2D3E50),
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '$label complaints filter',
+      child: Tooltip(
+        message: 'Show $label complaints',
+        child: ChoiceChip(
+          label: Text(label),
+          selected: selected,
+          onSelected: (_) {
+            setState(() {
+              _selectedFilter = value;
+            });
+          },
+          showCheckmark: false,
+          selectedColor: const Color(0xFF102D45),
+          backgroundColor: Colors.white,
+          labelStyle: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: selected ? Colors.white : const Color(0xFF2D3E50),
+          ),
+          side: BorderSide(
+            color: selected ? const Color(0xFF102D45) : const Color(0xFFC7D1DE),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
-        side: BorderSide(
-          color: selected ? const Color(0xFF102D45) : const Color(0xFFC7D1DE),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -758,27 +805,33 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
   }
 
   Widget _reportButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ReportIssueScreen()),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF102D45),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+    return Semantics(
+      button: true,
+      label: 'Report a new issue',
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ReportIssueScreen(),
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF102D45),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
-        ),
-        icon: const Icon(Icons.report_outlined),
-        label: const Text(
-          'Report new issue',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+          icon: const Icon(Icons.report_outlined),
+          label: const Text(
+            'Report new issue',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+          ),
         ),
       ),
     );

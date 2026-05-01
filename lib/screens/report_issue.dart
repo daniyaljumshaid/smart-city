@@ -31,6 +31,53 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         _descriptionController.text.trim().isNotEmpty;
   }
 
+  void _resetForm() {
+    setState(() {
+      _citizenNameController.clear();
+      _descriptionController.clear();
+      _selectedIssue = 'Auto Detect';
+      _selectedPriority = 'AI Recommended';
+      _locationText = 'Not Selected';
+      _photoPath = '';
+      _analysis = null;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Form cleared. You can start again.')),
+    );
+  }
+
+  Future<void> _confirmSubmit() async {
+    if (!_canSubmit) {
+      showError('Add a description and select a location first.');
+      return;
+    }
+
+    final shouldSubmit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Submit complaint?'),
+        content: Text(
+          'Review the details before sending.\n\nIssue: $_selectedIssue\nPriority: $_selectedPriority\nLocation: $_locationText',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Review again'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Submit now'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSubmit == true && mounted) {
+      _submitComplaint();
+    }
+  }
+
   void showError(String msg) {
     ScaffoldMessenger.of(
       context,
@@ -180,9 +227,9 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: AppTheme.mainHeadingDecoration(),
-                child: Column(
+                child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
                       'Complaint & Issue Reporting',
                       style: TextStyle(
@@ -466,13 +513,24 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _canSubmit ? _submitComplaint : null,
-                  icon: const Icon(Icons.send_rounded),
-                  label: const Text('Submit Complaint'),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _resetForm,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Clear Form'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _confirmSubmit,
+                      icon: const Icon(Icons.send_rounded),
+                      label: const Text('Submit Complaint'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
