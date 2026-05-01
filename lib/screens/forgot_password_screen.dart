@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import '../theme/app_theme.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -46,13 +47,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0F2A43), Color(0xFF184E77), Color(0xFF1D6FA5)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: Stack(
           children: [
             Positioned(
@@ -82,7 +77,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
                   child: Container(
                     width: cardWidth,
                     padding: const EdgeInsets.all(22),
@@ -115,7 +113,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFEAF4FF),
                               borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: const Color(0xFFBFDCF7)),
+                              border: Border.all(
+                                color: const Color(0xFFBFDCF7),
+                              ),
                             ),
                             child: const Icon(
                               Icons.lock_reset_rounded,
@@ -131,7 +131,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             style: TextStyle(
                               fontSize: isSmall ? 24 : 28,
                               fontWeight: FontWeight.w800,
-                              color: const Color(0xFF14324A),
+                              color: AppTheme.headingOnLight,
                             ),
                           ),
                         ),
@@ -158,15 +158,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         TextField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.email],
                           decoration: InputDecoration(
                             hintText: 'name@company.com',
                             prefixIcon: const Icon(Icons.email_outlined),
-                            filled: true,
-                            fillColor: const Color(0xFFF3F8FE),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
                           ),
                         ),
                         const SizedBox(height: 22),

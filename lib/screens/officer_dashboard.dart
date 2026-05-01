@@ -6,6 +6,7 @@ import 'dart:io';
 import '../complaint_store.dart';
 import 'complaint_tracking.dart';
 import 'login_screen.dart';
+import '../theme/app_theme.dart';
 
 class OfficerDashboardScreen extends StatefulWidget {
   const OfficerDashboardScreen({super.key});
@@ -25,7 +26,10 @@ class _OfficerDashboardScreenState extends State<OfficerDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Government Officer Dashboard'),
+        title: const Text(
+          'Government Officer Dashboard',
+          style: TextStyle(color: AppTheme.headingOnLight),
+        ),
         centerTitle: true,
         actions: [
           IconButton(
@@ -54,13 +58,7 @@ class _OfficerDashboardScreenState extends State<OfficerDashboardScreen> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF10293F), Color(0xFF184E77), Color(0xFF0D6E8E)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: Column(
           children: [
             Padding(
@@ -102,16 +100,33 @@ class _OfficerDashboardScreenState extends State<OfficerDashboardScreen> {
                       child: Container(
                         margin: const EdgeInsets.all(20),
                         padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.95),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Text(
-                          'No assigned tasks right now.',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        decoration: AppTheme.mainHeadingDecoration(),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'No assigned tasks right now.',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.headingOnDark,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ComplaintTrackingScreen(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.track_changes_rounded),
+                              label: const Text('Open tracking'),
+                            ),
+                          ],
                         ),
                       ),
                     )
@@ -286,10 +301,7 @@ class _OfficerDashboardScreenState extends State<OfficerDashboardScreen> {
   }
 
   Color _statusColor(String status) {
-    if (status == 'Resolved') return const Color(0xFF2EAF63);
-    if (status == 'In Progress') return const Color(0xFF2B87D1);
-    if (status == 'Assigned') return const Color(0xFF8D6CE3);
-    return const Color(0xFFF08B2D);
+    return AppTheme.statusColor(status);
   }
 
   Future<void> _openUpdateSheet(Complaint complaint) async {
@@ -331,6 +343,7 @@ class _OfficerDashboardScreenState extends State<OfficerDashboardScreen> {
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 18,
+                        color: AppTheme.headingOnLight,
                       ),
                     ),
                     const SizedBox(height: 10),

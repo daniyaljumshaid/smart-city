@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../theme/app_theme.dart';
 
 class LocationSelection {
   const LocationSelection({required this.latitude, required this.longitude});
@@ -59,9 +60,35 @@ class _LocationScreenState extends State<LocationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Select Location'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text(
+          'Select Location',
+          style: TextStyle(color: AppTheme.headingOnLight),
+        ),
+        centerTitle: true,
+      ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: AppTheme.panelDecoration(),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppTheme.primary),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tap anywhere on the map to set the issue location.',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           Expanded(
             child: FlutterMap(
               options: MapOptions(
@@ -102,7 +129,7 @@ class _LocationScreenState extends State<LocationScreen> {
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
             decoration: BoxDecoration(
               color: const Color(0xFFF3F8FE),
-              border: Border(top: BorderSide(color: Colors.grey.shade300)),
+              border: Border(top: BorderSide(color: AppTheme.border)),
             ),
             child: Text(
               'Selected: Lat ${selectedLocation.latitude.toStringAsFixed(6)}, Lng ${selectedLocation.longitude.toStringAsFixed(6)}',

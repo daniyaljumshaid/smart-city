@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'ai_city_insights.dart';
 import 'complaint_tracking.dart';
 import 'login_screen.dart';
+import '../theme/app_theme.dart';
 
 class AnalysisDashboardScreen extends StatelessWidget {
   const AnalysisDashboardScreen({super.key});
@@ -19,7 +20,10 @@ class AnalysisDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Analysis Dashboard"),
+        title: const Text(
+          "Analysis Dashboard",
+          style: TextStyle(color: AppTheme.headingOnLight),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -39,13 +43,7 @@ class AnalysisDashboardScreen extends StatelessWidget {
       ),
 
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0F2A43), Color(0xFF184E77), Color(0xFF1D6FA5)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -54,15 +52,12 @@ class AnalysisDashboardScreen extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(16),
-                ),
+                decoration: AppTheme.mainHeadingDecoration(),
                 child: Row(
                   children: [
                     const Icon(
                       Icons.analytics_rounded,
-                      color: Color(0xFF0E5A92),
+                      color: Color(0xFF8FD3FF),
                       size: 28,
                     ),
                     const SizedBox(width: 10),
@@ -72,7 +67,7 @@ class AnalysisDashboardScreen extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF14324A),
+                              color: AppTheme.headingOnDark,
                             ),
                       ),
                     ),
@@ -363,7 +358,7 @@ class AnalysisDashboardScreen extends StatelessWidget {
             title,
             style: const TextStyle(
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1E384D),
+              color: AppTheme.headingOnLight,
             ),
           ),
           const SizedBox(height: 10),

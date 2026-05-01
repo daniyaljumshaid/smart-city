@@ -4,6 +4,7 @@ import 'officer_dashboard.dart';
 import 'admin_dashboard.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
+import '../theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,8 +14,23 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
   String _selectedRole = 'Citizen';
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppTheme.danger),
+    );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,13 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0F2A43), Color(0xFF184E77), Color(0xFF1D6FA5)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: Stack(
           children: [
             Positioned(
@@ -106,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(
                               fontSize: isSmall ? 24 : 28,
                               fontWeight: FontWeight.w800,
-                              color: const Color(0xFF14324A),
+                              color: AppTheme.headingOnLight,
                             ),
                           ),
                         ),
@@ -131,16 +141,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 8),
                         TextField(
+                          controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.email],
                           decoration: InputDecoration(
                             hintText: 'name@company.com',
                             prefixIcon: const Icon(Icons.mail_outline),
-                            filled: true,
-                            fillColor: const Color(0xFFF3F8FE),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -153,7 +160,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 8),
                         TextField(
+                          controller: _passwordController,
                           obscureText: _obscurePassword,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.password],
                           decoration: InputDecoration(
                             hintText: 'Enter your password',
                             prefixIcon: const Icon(Icons.lock_outline),
@@ -168,12 +178,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ? Icons.visibility_outlined
                                     : Icons.visibility_off_outlined,
                               ),
-                            ),
-                            filled: true,
-                            fillColor: const Color(0xFFF3F8FE),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
                             ),
                           ),
                         ),
@@ -190,12 +194,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           value: _selectedRole,
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.badge_outlined),
-                            filled: true,
-                            fillColor: const Color(0xFFF3F8FE),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
                           ),
                           items: const [
                             DropdownMenuItem(
@@ -242,15 +240,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: double.infinity,
                           height: 54,
                           child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0F609B),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
                             onPressed: () {
+                              final email = _emailController.text.trim();
+                              final password = _passwordController.text.trim();
+                              if (email.isEmpty || !email.contains('@')) {
+                                _showError('Enter a valid email address.');
+                                return;
+                              }
+                              if (password.isEmpty) {
+                                _showError('Enter your password to continue.');
+                                return;
+                              }
                               final Widget destination;
                               if (_selectedRole == 'Citizen') {
                                 destination = const CitizenDashboard();
