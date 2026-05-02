@@ -40,7 +40,7 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
+  static final FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyDKIuairsthkPapZAzOeAQp1QYrEI6vxa8',
     appId: '1:93791409800:web:3e46d001112e89f1dc313d',
     messagingSenderId: '93791409800',
@@ -50,7 +50,7 @@ class DefaultFirebaseOptions {
     measurementId: 'G-R54SPR8FM2',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
+  static final FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAoP4GZnhUXnHeoEfKw5MSs8Zs91vcO_sU',
     appId: '1:93791409800:android:0791da08e7793e7fdc313d',
     messagingSenderId: '93791409800',
@@ -58,7 +58,7 @@ class DefaultFirebaseOptions {
     storageBucket: 'smart-city-zains.firebasestorage.app',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
+  static final FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDG9wh4PnR7z3PYZ0fanxkN5hszizEDvLw',
     appId: '1:93791409800:ios:378467d807a741c1dc313d',
     messagingSenderId: '93791409800',
@@ -67,7 +67,7 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.classiconVsCode',
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
+  static final FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyDG9wh4PnR7z3PYZ0fanxkN5hszizEDvLw',
     appId: '1:93791409800:ios:378467d807a741c1dc313d',
     messagingSenderId: '93791409800',
@@ -76,7 +76,7 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.classiconVsCode',
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
+  static final FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyDKIuairsthkPapZAzOeAQp1QYrEI6vxa8',
     appId: '1:93791409800:web:102ac20834b9eb2bdc313d',
     messagingSenderId: '93791409800',
