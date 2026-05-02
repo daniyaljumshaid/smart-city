@@ -14,6 +14,7 @@ class _SplashScreenState extends State<SplashScreen>
   late final AnimationController _controller;
   late final Animation<double> _opacity;
   late final Animation<double> _scale;
+  Timer? _navigationTimer;
 
   @override
   void initState() {
@@ -29,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
     _controller.forward();
 
-    Timer(const Duration(seconds: 3), () {
+    _navigationTimer = Timer(const Duration(seconds: 3), () {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -40,6 +41,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
+    _navigationTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -67,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen>
                 width: 240,
                 height: 240,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.09),
+                  color: Colors.white.withOpacity(0.09),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -79,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen>
                 width: 260,
                 height: 260,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: Colors.white.withOpacity(0.08),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -101,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen>
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(28),
-                              color: Colors.white.withValues(alpha: 0.95),
+                              color: Colors.white.withOpacity(0.95),
                               boxShadow: const [
                                 BoxShadow(
                                   color: Color(0x33000000),
@@ -112,9 +114,15 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(16),
-                              child: Image.asset(
-                                'assets/images/smart_city.jpg',
-                                fit: BoxFit.cover,
+                              child: Container(
+                                color: const Color(0xFFEAF4FF),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.location_city_outlined,
+                                    size: 54,
+                                    color: Color(0xFF1B7CB6),
+                                  ),
+                                ),
                               ),
                             ),
                           ),

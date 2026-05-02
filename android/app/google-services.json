@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "93791409800",
+    "project_id": "smart-city-zains",
+    "storage_bucket": "smart-city-zains.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:93791409800:android:0791da08e7793e7fdc313d",
+        "android_client_info": {
+          "package_name": "com.example.classicon_vs_code"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoP4GZnhUXnHeoEfKw5MSs8Zs91vcO_sU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
