@@ -7,6 +7,7 @@ import 'emergency_screen.dart';
 import 'notifications_screen.dart';
 import 'login_screen.dart';
 import 'my_complaints_screen.dart';
+import '../theme/app_theme.dart';
 
 class CitizenDashboard extends StatelessWidget {
   const CitizenDashboard({super.key});
@@ -30,7 +31,7 @@ class CitizenDashboard extends StatelessWidget {
         .length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F8FD),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -38,7 +39,7 @@ class CitizenDashboard extends StatelessWidget {
         title: const Text(
           'Citizen Dashboard',
           style: TextStyle(
-            color: Color(0xFF10283E),
+            color: AppTheme.headingOnLight,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -56,6 +57,7 @@ class CitizenDashboard extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.notifications, color: Colors.black),
+                tooltip: 'Notifications',
               ),
               if (unreadCitizen > 0)
                 Positioned(
@@ -91,19 +93,14 @@ class CitizenDashboard extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.logout_rounded, color: Colors.black),
+            tooltip: 'Logout',
           ),
         ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
         child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFF5F9FF), Color(0xFFEAF3FF), Color(0xFFF8FBFF)],
-            ),
-          ),
+          decoration: const BoxDecoration(gradient: AppTheme.lightGradient),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -133,7 +130,7 @@ class CitizenDashboard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: AppTheme.headingOnDark,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -182,13 +179,6 @@ class CitizenDashboard extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Search complaints, areas, categories...',
                   prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
                 ),
               ),
 
@@ -199,7 +189,7 @@ class CitizenDashboard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF16344D),
+                  color: AppTheme.headingOnLight,
                 ),
               ),
 
@@ -288,7 +278,6 @@ class CitizenDashboard extends StatelessWidget {
                       );
                     },
                   ),
-
                 ],
               ),
 
@@ -302,7 +291,7 @@ class CitizenDashboard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF16344D),
+                      color: AppTheme.headingOnLight,
                     ),
                   ),
                   TextButton(
@@ -328,9 +317,27 @@ class CitizenDashboard extends StatelessWidget {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'No complaints yet. Use Report Issue to submit your first case.',
-                    style: TextStyle(color: Colors.black87),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'No complaints yet. Use Report Issue to submit your first case.',
+                        style: TextStyle(color: Colors.black87),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ReportIssueScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.report_outlined),
+                        label: const Text('Report your first issue'),
+                      ),
+                    ],
                   ),
                 ),
               ...recentComplaints.map(
@@ -351,7 +358,7 @@ class CitizenDashboard extends StatelessWidget {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
-        selectedItemColor: const Color(0xFF0F609B),
+        selectedItemColor: AppTheme.primary,
         unselectedItemColor: const Color(0xFF7B8DA0),
         onTap: (index) {
           if (index == 1) {
@@ -384,10 +391,7 @@ class CitizenDashboard extends StatelessWidget {
   }
 
   Color _statusColor(String status) {
-    if (status == 'Resolved') return Colors.green;
-    if (status == 'In Progress') return Colors.blue;
-    if (status == 'Assigned') return Colors.purple;
-    return Colors.orange;
+    return AppTheme.statusColor(status);
   }
 
   Widget dashboardCard(

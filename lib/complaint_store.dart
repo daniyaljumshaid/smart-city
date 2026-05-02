@@ -285,6 +285,19 @@ class ComplaintStore {
     );
   }
 
+  static bool removeComplaintById(String complaintId) {
+    final index = complaints.indexWhere(
+      (complaint) => complaint.id == complaintId,
+    );
+    if (index == -1) return false;
+
+    complaints.removeAt(index);
+    notifications.removeWhere(
+      (notification) => notification.message.contains(complaintId),
+    );
+    return true;
+  }
+
   static void addComplaintUpdate({
     required String complaintId,
     required String status,

@@ -6,6 +6,7 @@ import 'location_screen.dart';
 import 'login_screen.dart';
 import 'notifications_screen.dart';
 import 'report_issue.dart';
+import '../theme/app_theme.dart';
 
 class ComplaintTrackingScreen extends StatelessWidget {
   const ComplaintTrackingScreen({super.key});
@@ -21,7 +22,7 @@ class ComplaintTrackingScreen extends StatelessWidget {
         centerTitle: true,
         title: const Text(
           "Complaint Tracking",
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: AppTheme.headingOnLight),
         ),
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
@@ -36,6 +37,7 @@ class ComplaintTrackingScreen extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.notifications_active_outlined),
+            tooltip: 'Notifications',
           ),
           IconButton(
             onPressed: () {
@@ -47,6 +49,7 @@ class ComplaintTrackingScreen extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.add_circle_outline_rounded),
+            tooltip: 'Report issue',
           ),
           IconButton(
             onPressed: () {
@@ -57,34 +60,26 @@ class ComplaintTrackingScreen extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Logout',
           ),
         ],
       ),
 
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0F2A43), Color(0xFF184E77), Color(0xFF1D6FA5)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: complaints.isEmpty
             ? Center(
                 child: Container(
                   margin: const EdgeInsets.all(20),
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
+                  decoration: AppTheme.mainHeadingDecoration(),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
                         Icons.inbox_rounded,
                         size: 44,
-                        color: Color(0xFF0E5A92),
+                        color: Color(0xFF8FD3FF),
                       ),
                       const SizedBox(height: 10),
                       Text(
@@ -92,13 +87,14 @@ class ComplaintTrackingScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
+                          color: AppTheme.headingOnDark,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         "Submit a complaint to start tracking progress.",
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFF5A7288)),
+                        style: const TextStyle(color: Color(0xFFE8EEF3)),
                       ),
                       const SizedBox(height: 14),
                       SizedBox(
@@ -132,20 +128,20 @@ class ComplaintTrackingScreen extends StatelessWidget {
 
                   Color priorityColor;
                   if (complaint.priority == "High") {
-                    priorityColor = const Color(0xFFD84D4D);
+                    priorityColor = AppTheme.priorityColor('High');
                   } else if (complaint.priority == "Medium") {
-                    priorityColor = const Color(0xFFF08B2D);
+                    priorityColor = AppTheme.priorityColor('Medium');
                   } else {
-                    priorityColor = const Color(0xFF2EAF63);
+                    priorityColor = AppTheme.priorityColor('Low');
                   }
 
                   Color statusColor;
                   if (complaint.status == "Resolved") {
-                    statusColor = const Color(0xFF2EAF63);
+                    statusColor = AppTheme.statusColor('Resolved');
                   } else if (complaint.status == "In Progress") {
-                    statusColor = const Color(0xFF2B87D1);
+                    statusColor = AppTheme.statusColor('In Progress');
                   } else {
-                    statusColor = const Color(0xFFF08B2D);
+                    statusColor = AppTheme.statusColor('Pending');
                   }
 
                   return Container(
