@@ -6,9 +6,24 @@ import 'city_analytics.dart';
 import 'complaint_tracking.dart';
 import 'login_screen.dart';
 import 'officer_dashboard.dart';
+import '../theme/app_theme.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +35,12 @@ class AdminDashboardScreen extends StatelessWidget {
     final departmentStats = _departmentPerformance(complaints);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7FC),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        title: const Text(
+          'Admin Dashboard',
+          style: TextStyle(color: AppTheme.headingOnLight),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -55,6 +73,10 @@ class AdminDashboardScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 _tabStrip(context),
                 const SizedBox(height: 14),
+                if (_searchQuery.isNotEmpty) ...[
+                  _searchResultsCard(_matchingComplaints(_searchQuery)),
+                  const SizedBox(height: 14),
+                ],
                 if (isNarrow) ...[
                   _cityOverviewCard(
                     total: total,
@@ -106,16 +128,16 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget _titleStrip() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFCAD5E2)),
-        borderRadius: BorderRadius.circular(8),
-      ),
+      padding: const EdgeInsets.all(16),
+      decoration: AppTheme.mainHeadingDecoration(),
       child: const Text(
         '5. Admin: Main Dashboard',
         textAlign: TextAlign.center,
-        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 21),
+        style: TextStyle(
+          fontWeight: FontWeight.w800,
+          fontSize: 21,
+          color: AppTheme.headingOnDark,
+        ),
       ),
     );
   }
@@ -123,28 +145,117 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget _headerBar() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: const Color(0xFF0F2238), width: 1.2),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: const Row(
+      child: Row(
         children: [
           Expanded(
-            child: Text(
-              'SMART CITY ADMIN',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'SMART CITY',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                    color: AppTheme.primary,
+                  ),
+                ),
+                const Text(
+                  'ADMIN',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                    color: AppTheme.primary,
+                  ),
+                ),
+              ],
             ),
           ),
-          Icon(Icons.search_rounded, size: 18),
-          SizedBox(width: 4),
-          Text(
-            '[Search...] [Admin]',
-            style: TextStyle(fontWeight: FontWeight.w700),
+          Expanded(
+            flex: 2,
+            child: Container(
+              height: 46,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.search_rounded,
+                    size: 18,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        hintText: 'Search complaints, departments, users...',
+                        hintStyle: TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 13,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      style: const TextStyle(fontSize: 13),
+                      cursorColor: AppTheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          SizedBox(width: 4),
-          Icon(Icons.admin_panel_settings_rounded, size: 18),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF4FF),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFBFDCF7)),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.admin_panel_settings_rounded,
+                  size: 18,
+                  color: AppTheme.primary,
+                ),
+                SizedBox(width: 6),
+                Text(
+                  'Admin',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    color: AppTheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -153,14 +264,21 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget _tabStrip(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFC5D1DD)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Wrap(
-        spacing: 8,
+        spacing: 10,
         runSpacing: 8,
         children: [
           _tabButton(label: 'Overview', active: true, onTap: () {}),
@@ -203,7 +321,6 @@ class AdminDashboardScreen extends StatelessWidget {
               _showUsersModal(context);
             },
           ),
-
         ],
       ),
     );
@@ -216,21 +333,32 @@ class AdminDashboardScreen extends StatelessWidget {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF102A42) : const Color(0xFFF6FAFF),
-          borderRadius: BorderRadius.circular(8),
+          color: active ? AppTheme.primary : const Color(0xFFF6FAFF),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: active ? const Color(0xFF102A42) : const Color(0xFFCCD7E3),
+            color: active ? AppTheme.primary : const Color(0xFFD1DCE7),
+            width: active ? 2 : 1.5,
           ),
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primary.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
-          '[$label]',
+          label,
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            color: active ? Colors.white : const Color(0xFF1C354B),
+            fontSize: 13,
+            color: active ? Colors.white : const Color(0xFF3F5B7B),
           ),
         ),
       ),
@@ -421,7 +549,7 @@ class AdminDashboardScreen extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              color: Color(0xFF20384E),
+              color: AppTheme.headingOnLight,
               fontSize: 12,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.5,
@@ -429,6 +557,103 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           child,
+        ],
+      ),
+    );
+  }
+
+  List<Complaint> _matchingComplaints(String query) {
+    final lower = query.toLowerCase().trim();
+    if (lower.isEmpty) return [];
+
+    return ComplaintStore.complaints.where((complaint) {
+      return complaint.id.toLowerCase().contains(lower) ||
+          complaint.issueType.toLowerCase().contains(lower) ||
+          complaint.description.toLowerCase().contains(lower) ||
+          complaint.location.toLowerCase().contains(lower) ||
+          complaint.department.toLowerCase().contains(lower) ||
+          complaint.citizenName.toLowerCase().contains(lower) ||
+          complaint.status.toLowerCase().contains(lower);
+    }).toList();
+  }
+
+  Widget _searchResultsCard(List<Complaint> results) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Search Results',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+              color: AppTheme.primaryDark,
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (results.isEmpty)
+            const Text(
+              'No matching complaints found. Try a different keyword.',
+              style: TextStyle(color: Color(0xFF526277)),
+            )
+          else
+            Column(
+              children: results
+                  .map(
+                    (complaint) => Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7FBFF),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFD7E7F4)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${complaint.id} • ${complaint.issueType}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            complaint.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Color(0xFF526277)),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${complaint.department} • ${complaint.status} • ${complaint.citizenName}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF8AA0B1),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
         ],
       ),
     );

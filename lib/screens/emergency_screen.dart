@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../complaint_store.dart';
 import 'location_screen.dart';
 import 'login_screen.dart';
+import '../theme/app_theme.dart';
 
 class EmergencyScreen extends StatelessWidget {
   const EmergencyScreen({super.key});
@@ -13,7 +14,10 @@ class EmergencyScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Emergency Mode'),
+        title: const Text(
+          'Emergency Mode',
+          style: TextStyle(color: AppTheme.headingOnLight),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -28,17 +32,12 @@ class EmergencyScreen extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Logout',
           ),
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0F2A43), Color(0xFF184E77), Color(0xFF1D6FA5)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -72,7 +71,7 @@ class EmergencyScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: isSmall ? 18 : 20,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF8E2020),
+                        color: AppTheme.danger,
                       ),
                     ),
                   ),
@@ -156,7 +155,7 @@ class EmergencyScreen extends StatelessWidget {
                       'ADDITIONAL EMERGENCY OPTIONS',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Color(0xFF204561),
+                        color: AppTheme.headingOnLight,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.4,
                       ),

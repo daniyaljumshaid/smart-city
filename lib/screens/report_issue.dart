@@ -6,6 +6,7 @@ import 'location_screen.dart';
 import '../complaint_store.dart';
 import '../services/ai_engine.dart';
 import 'my_complaints_screen.dart';
+import '../theme/app_theme.dart';
 
 class ReportIssueScreen extends StatefulWidget {
   const ReportIssueScreen({super.key});
@@ -24,6 +25,58 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   String _locationText = 'Not Selected';
   String _photoPath = '';
   AiClassificationResult? _analysis;
+
+  bool get _canSubmit {
+    return _locationText != 'Not Selected' &&
+        _descriptionController.text.trim().isNotEmpty;
+  }
+
+  void _resetForm() {
+    setState(() {
+      _citizenNameController.clear();
+      _descriptionController.clear();
+      _selectedIssue = 'Auto Detect';
+      _selectedPriority = 'AI Recommended';
+      _locationText = 'Not Selected';
+      _photoPath = '';
+      _analysis = null;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Form cleared. You can start again.')),
+    );
+  }
+
+  Future<void> _confirmSubmit() async {
+    if (!_canSubmit) {
+      showError('Add a description and select a location first.');
+      return;
+    }
+
+    final shouldSubmit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Submit complaint?'),
+        content: Text(
+          'Review the details before sending.\n\nIssue: $_selectedIssue\nPriority: $_selectedPriority\nLocation: $_locationText',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Review again'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Submit now'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSubmit == true && mounted) {
+      _submitComplaint();
+    }
+  }
 
   void showError(String msg) {
     ScaffoldMessenger.of(
@@ -149,282 +202,373 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Complaint Reporting'),
+        title: const Text(
+          'AI Complaint Reporting',
+          style: TextStyle(color: AppTheme.headingOnLight),
+        ),
         centerTitle: true,
         actions: [
           TextButton.icon(
             onPressed: _runAiClassification,
             icon: const Icon(Icons.psychology_alt_rounded),
             label: const Text('Analyze'),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.primary),
           ),
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0F2A43), Color(0xFF184E77), Color(0xFF1D6FA5)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.96),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Complaint & Issue Reporting',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'AI automatically classifies category, urgency, and department assignment.',
-                  style: TextStyle(color: Color(0xFF5A7288)),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _citizenNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Citizen Name',
-                    hintText: 'Enter your name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: _selectedIssue,
-                  decoration: const InputDecoration(
-                    labelText: 'Issue Category',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Auto Detect',
-                      child: Text('Auto Detect by AI'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: AppTheme.mainHeadingDecoration(),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Complaint & Issue Reporting',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.headingOnDark,
+                      ),
                     ),
-                    DropdownMenuItem(
-                      value: 'Road Damage',
-                      child: Text('Road Damage'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Water Leakage',
-                      child: Text('Water Leakage'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Street Light',
-                      child: Text('Street Light Issue'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Garbage',
-                      child: Text('Garbage Issue'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Emergency',
-                      child: Text('Emergency'),
+                    SizedBox(height: 6),
+                    Text(
+                      'Complete the sections below to submit a clear complaint. AI will help classify the issue and urgency.',
+                      style: TextStyle(color: Color(0xFFE8EEF3)),
                     ),
                   ],
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() {
-                      _selectedIssue = value;
-                    });
-                  },
                 ),
-                const SizedBox(height: 12),
-                TextField(
+              ),
+              const SizedBox(height: 16),
+              _sectionCard(
+                title: 'Reporter Details',
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _citizenNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Citizen Name',
+                        hintText: 'Enter your name',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _selectedIssue,
+                      decoration: const InputDecoration(
+                        labelText: 'Issue Category',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Auto Detect',
+                          child: Text('Auto Detect by AI'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Road Damage',
+                          child: Text('Road Damage'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Water Leakage',
+                          child: Text('Water Leakage'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Street Light',
+                          child: Text('Street Light Issue'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Garbage',
+                          child: Text('Garbage Issue'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Emergency',
+                          child: Text('Emergency'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _selectedIssue = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _selectedPriority,
+                            decoration: const InputDecoration(
+                              labelText: 'Priority',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'AI Recommended',
+                                child: Text('AI Recommended'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Low',
+                                child: Text('Low'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Medium',
+                                child: Text('Medium'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'High',
+                                child: Text('High'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setState(() {
+                                _selectedPriority = value;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickImage,
+                            icon: const Icon(Icons.image_outlined),
+                            label: Text(
+                              _photoPath.isEmpty
+                                  ? 'Upload Photo'
+                                  : 'Photo Added',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_photoPath.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: kIsWeb
+                            ? Container(
+                                height: 150,
+                                width: double.infinity,
+                                color: const Color(0xFFF3F8FE),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  'Image preview is supported on mobile/desktop apps.',
+                                  style: TextStyle(color: Color(0xFF4F677A)),
+                                ),
+                              )
+                            : Image.file(
+                                File(_photoPath),
+                                height: 150,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) {
+                                  return Container(
+                                    height: 150,
+                                    width: double.infinity,
+                                    color: const Color(0xFFF3F8FE),
+                                    alignment: Alignment.center,
+                                    child: const Text(
+                                      'Unable to load selected image.',
+                                      style: TextStyle(
+                                        color: Color(0xFF4F677A),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _sectionCard(
+                title: 'Describe the Issue',
+                child: TextField(
                   controller: _descriptionController,
-                  maxLines: 4,
+                  maxLines: 5,
+                  onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(
                     labelText: 'Description',
                     hintText: 'Describe the issue in detail',
                     border: OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Row(
+              ),
+              const SizedBox(height: 12),
+              _sectionCard(
+                title: 'Location & Status',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedPriority,
-                        decoration: const InputDecoration(
-                          labelText: 'Priority',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'AI Recommended',
-                            child: Text('AI Recommended'),
-                          ),
-                          DropdownMenuItem(value: 'Low', child: Text('Low')),
-                          DropdownMenuItem(
-                            value: 'Medium',
-                            child: Text('Medium'),
-                          ),
-                          DropdownMenuItem(value: 'High', child: Text('High')),
-                        ],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() {
-                            _selectedPriority = value;
-                          });
-                        },
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF4FF),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFBFDDF8)),
+                      ),
+                      child: Text(
+                        'Tagged Location: $_locationText',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _pickImage,
-                        icon: const Icon(Icons.image_outlined),
-                        label: Text(
-                          _photoPath.isEmpty ? 'Upload Photo' : 'Photo Added',
-                        ),
+                    if (_locationText == 'Not Selected') ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Select a location to continue with submission.',
+                        style: TextStyle(color: AppTheme.textMuted),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LocationScreen(
+                                initialLocationText: _locationText,
+                              ),
+                            ),
+                          );
+
+                          if (result == null) return;
+                          setState(() {
+                            _locationText = result as String;
+                          });
+                        },
+                        icon: const Icon(Icons.location_on_rounded),
+                        label: const Text('Tag Location'),
                       ),
                     ),
                   ],
                 ),
-                if (_photoPath.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: kIsWeb
-                        ? Container(
-                            height: 150,
-                            width: double.infinity,
-                            color: const Color(0xFFF3F8FE),
-                            alignment: Alignment.center,
-                            child: const Text(
-                              'Image preview is supported on mobile/desktop apps.',
-                              style: TextStyle(color: Color(0xFF4F677A)),
+              ),
+              const SizedBox(height: 12),
+              _sectionCard(
+                title: 'AI Assistance',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Use AI to classify the issue quickly and assign a department.',
+                      style: TextStyle(color: AppTheme.textMuted),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _runAiClassification,
+                        icon: const Icon(Icons.psychology_alt_rounded),
+                        label: const Text('Run AI Classification'),
+                      ),
+                    ),
+                    if (_analysis != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          color: const Color(0xFFEAF4FF),
+                          border: Border.all(color: const Color(0xFFBFDDF8)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Category: ${_analysis!.category}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          )
-                        : Image.file(
-                            File(_photoPath),
-                            height: 150,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) {
-                              return Container(
-                                height: 150,
-                                width: double.infinity,
-                                color: const Color(0xFFF3F8FE),
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  'Unable to load selected image.',
-                                  style: TextStyle(color: Color(0xFF4F677A)),
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F8FE),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Tagged Location: $_locationText',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => LocationScreen(
-                            initialLocationText: _locationText,
-                          ),
+                            const SizedBox(height: 4),
+                            Text('Priority: ${_analysis!.priority}'),
+                            Text(
+                              'Urgency Score: ${(_analysis!.urgencyScore * 100).toStringAsFixed(0)}%',
+                            ),
+                            Text('Department: ${_analysis!.department}'),
+                            Text('ETA: ${_analysis!.etaHours} hours'),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Signals: ${_analysis!.matchedSignals.isEmpty ? 'No strong keywords' : _analysis!.matchedSignals.join(', ')}',
+                              style: const TextStyle(color: Color(0xFF35576F)),
+                            ),
+                          ],
                         ),
-                      );
-
-                      if (result == null) return;
-                      setState(() {
-                        _locationText = result as String;
-                      });
-                    },
-                    icon: const Icon(Icons.location_on_rounded),
-                    label: const Text('Tag Location'),
-                  ),
+                      ),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _runAiClassification,
-                    icon: const Icon(Icons.psychology_alt_rounded),
-                    label: const Text('Run AI Classification'),
-                  ),
-                ),
-                if (_analysis != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: const Color(0xFFEAF4FF),
-                      border: Border.all(color: const Color(0xFFBFDDF8)),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _resetForm,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Clear Form'),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'AI Classification Output',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF144062),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text('Category: ${_analysis!.category}'),
-                        Text('Priority: ${_analysis!.priority}'),
-                        Text(
-                          'Urgency Score: ${(_analysis!.urgencyScore * 100).toStringAsFixed(0)}%',
-                        ),
-                        Text('Department: ${_analysis!.department}'),
-                        Text(
-                          'Estimated Resolution Time: ${_analysis!.etaHours}h',
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Signals: ${_analysis!.matchedSignals.isEmpty ? 'No strong keywords' : _analysis!.matchedSignals.join(', ')}',
-                          style: const TextStyle(color: Color(0xFF35576F)),
-                        ),
-                      ],
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _confirmSubmit,
+                      icon: const Icon(Icons.send_rounded),
+                      label: const Text('Submit Complaint'),
                     ),
                   ),
                 ],
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _submitComplaint,
-                    icon: const Icon(Icons.send_rounded),
-                    label: const Text('Submit Complaint'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0F609B),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _sectionCard({required String title, required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE6EDF5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              color: AppTheme.primaryDark,
+            ),
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
       ),
     );
   }

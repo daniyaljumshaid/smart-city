@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../complaint_store.dart';
 import '../services/ai_engine.dart';
+import '../theme/app_theme.dart';
 
 class AiCityInsightsScreen extends StatelessWidget {
   const AiCityInsightsScreen({super.key});
@@ -13,15 +14,15 @@ class AiCityInsightsScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('AI City Insights'), centerTitle: true),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0F2A43), Color(0xFF145382), Color(0xFF1B7CB6)],
-          ),
+      appBar: AppBar(
+        title: const Text(
+          'AI City Insights',
+          style: TextStyle(color: AppTheme.headingOnLight),
         ),
+        centerTitle: true,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -66,21 +67,22 @@ class AiCityInsightsScreen extends StatelessWidget {
   Widget _headerCard({required String title, required String subtitle}) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(14),
-      ),
+      decoration: AppTheme.mainHeadingDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 17,
+              color: AppTheme.headingOnDark,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
-            style: const TextStyle(color: Color(0xFF4F677A), height: 1.35),
+            style: const TextStyle(color: Color(0xFFE8EEF3), height: 1.35),
           ),
         ],
       ),
@@ -115,6 +117,7 @@ class AiCityInsightsScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
+                  color: AppTheme.headingOnLight,
                 ),
               ),
             ],
@@ -192,7 +195,11 @@ class AiCityInsightsScreen extends StatelessWidget {
               SizedBox(width: 8),
               Text(
                 'Predictive Analysis',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: AppTheme.headingOnLight,
+                ),
               ),
             ],
           ),
@@ -201,7 +208,10 @@ class AiCityInsightsScreen extends StatelessWidget {
           const SizedBox(height: 10),
           const Text(
             'AI Recommendation',
-            style: TextStyle(fontWeight: FontWeight.w800),
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: AppTheme.headingOnLight,
+            ),
           ),
           const SizedBox(height: 4),
           Text(recommendation, style: const TextStyle(height: 1.35)),

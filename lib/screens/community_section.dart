@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../complaint_store.dart';
+import '../theme/app_theme.dart';
 
 class CommunitySectionScreen extends StatefulWidget {
   const CommunitySectionScreen({super.key});
@@ -27,10 +28,16 @@ class _CommunitySectionScreenState extends State<CommunitySectionScreen> {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Community Section'),
+          title: const Text(
+            'Community Section',
+            style: TextStyle(color: AppTheme.headingOnLight),
+          ),
           centerTitle: true,
           bottom: const TabBar(
             isScrollable: true,
+            indicatorColor: AppTheme.primary,
+            labelColor: AppTheme.primary,
+            unselectedLabelColor: AppTheme.textMuted,
             tabs: [
               Tab(text: 'Polls'),
               Tab(text: 'Feedback'),
@@ -40,13 +47,7 @@ class _CommunitySectionScreenState extends State<CommunitySectionScreen> {
           ),
         ),
         body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF0F2A43), Color(0xFF184E77), Color(0xFF1D6FA5)],
-            ),
-          ),
+          decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
           child: TabBarView(
             children: [
               _pollsView(),
@@ -133,7 +134,11 @@ class _CommunitySectionScreenState extends State<CommunitySectionScreen> {
             children: [
               const Text(
                 'Public Feedback',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                  color: AppTheme.headingOnLight,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -162,7 +167,6 @@ class _CommunitySectionScreenState extends State<CommunitySectionScreen> {
                 maxLines: 4,
                 decoration: const InputDecoration(
                   hintText: 'Write your feedback',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -171,7 +175,14 @@ class _CommunitySectionScreenState extends State<CommunitySectionScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     final feedback = _feedbackController.text.trim();
-                    if (feedback.isEmpty) return;
+                    if (feedback.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please add feedback before sending.'),
+                        ),
+                      );
+                      return;
+                    }
 
                     ComplaintStore.addSuggestion(
                       author: 'Citizen Feedback',
@@ -217,7 +228,11 @@ class _CommunitySectionScreenState extends State<CommunitySectionScreen> {
             children: [
               const Text(
                 'Public Suggestions',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                  color: AppTheme.headingOnLight,
+                ),
               ),
               const SizedBox(height: 10),
               TextField(
@@ -225,7 +240,6 @@ class _CommunitySectionScreenState extends State<CommunitySectionScreen> {
                 maxLines: 3,
                 decoration: const InputDecoration(
                   hintText: 'Share an idea for city improvement',
-                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 10),
@@ -234,7 +248,14 @@ class _CommunitySectionScreenState extends State<CommunitySectionScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     final suggestion = _suggestionController.text.trim();
-                    if (suggestion.isEmpty) return;
+                    if (suggestion.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please add a suggestion to submit.'),
+                        ),
+                      );
+                      return;
+                    }
 
                     setState(() {
                       ComplaintStore.addSuggestion(

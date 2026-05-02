@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import '../theme/app_theme.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -9,8 +10,27 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppTheme.danger),
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,13 +40,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFF1F7FF), Color(0xFFE6F2FF), Color(0xFFD8ECFF)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: Stack(
           children: [
             Positioned(
@@ -99,7 +113,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 style: TextStyle(
                                   fontSize: isSmall ? 23 : 27,
                                   fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF14324A),
+                                  color: AppTheme.headingOnLight,
                                 ),
                               ),
                             ),
@@ -123,8 +137,12 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         const SizedBox(height: 8),
                         _authInput(
+                          controller: _nameController,
                           hint: 'Your full name',
                           icon: Icons.badge_outlined,
+                          inputType: TextInputType.name,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.name],
                         ),
                         const SizedBox(height: 14),
                         const Text(
@@ -136,9 +154,12 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         const SizedBox(height: 8),
                         _authInput(
+                          controller: _emailController,
                           hint: 'name@company.com',
                           icon: Icons.mail_outline,
                           inputType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.email],
                         ),
                         const SizedBox(height: 14),
                         const Text(
@@ -150,9 +171,12 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         const SizedBox(height: 8),
                         _authInput(
+                          controller: _passwordController,
                           hint: 'Create a strong password',
                           icon: Icons.lock_outline,
                           obscureText: _obscurePassword,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.newPassword],
                           trailing: IconButton(
                             onPressed: () {
                               setState(() {
@@ -176,9 +200,12 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         const SizedBox(height: 8),
                         _authInput(
+                          controller: _confirmController,
                           hint: 'Re-enter your password',
                           icon: Icons.lock_reset,
                           obscureText: _obscureConfirmPassword,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.password],
                           trailing: IconButton(
                             onPressed: () {
                               setState(() {
@@ -198,15 +225,29 @@ class _SignupScreenState extends State<SignupScreen> {
                           width: double.infinity,
                           height: 54,
                           child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0E5E97),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
                             onPressed: () {
+                              final name = _nameController.text.trim();
+                              final email = _emailController.text.trim();
+                              final password = _passwordController.text.trim();
+                              final confirm = _confirmController.text.trim();
+                              if (name.isEmpty) {
+                                _showError('Please enter your full name.');
+                                return;
+                              }
+                              if (email.isEmpty || !email.contains('@')) {
+                                _showError('Enter a valid email address.');
+                                return;
+                              }
+                              if (password.length < 6) {
+                                _showError(
+                                  'Password must be at least 6 characters.',
+                                );
+                                return;
+                              }
+                              if (password != confirm) {
+                                _showError('Passwords do not match.');
+                                return;
+                              }
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
@@ -270,25 +311,25 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Widget _authInput({
+    required TextEditingController controller,
     required String hint,
     required IconData icon,
     TextInputType inputType = TextInputType.text,
     bool obscureText = false,
+    TextInputAction textInputAction = TextInputAction.next,
+    Iterable<String>? autofillHints,
     Widget? trailing,
   }) {
     return TextField(
+      controller: controller,
       keyboardType: inputType,
       obscureText: obscureText,
+      textInputAction: textInputAction,
+      autofillHints: autofillHints,
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(icon),
         suffixIcon: trailing,
-        filled: true,
-        fillColor: const Color(0xFFF3F8FE),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
       ),
     );
   }

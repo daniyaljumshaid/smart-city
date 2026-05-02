@@ -5,6 +5,7 @@ import 'analysis_dashboard.dart';
 import 'ai_city_insights.dart';
 import 'complaint_tracking.dart';
 import 'login_screen.dart';
+import '../theme/app_theme.dart';
 
 class CityAnalyticsScreen extends StatelessWidget {
   const CityAnalyticsScreen({super.key});
@@ -29,7 +30,10 @@ class CityAnalyticsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('City Analytics'),
+        title: const Text(
+          'City Analytics',
+          style: TextStyle(color: AppTheme.headingOnLight),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -48,13 +52,7 @@ class CityAnalyticsScreen extends StatelessWidget {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0F2A43), Color(0xFF184E77), Color(0xFF1D6FA5)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -63,15 +61,12 @@ class CityAnalyticsScreen extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    color: Colors.white.withValues(alpha: 0.95),
-                  ),
+                  decoration: AppTheme.mainHeadingDecoration(),
                   child: const Row(
                     children: [
                       Icon(
                         Icons.query_stats_rounded,
-                        color: Color(0xFF0E5A92),
+                        color: Color(0xFF8FD3FF),
                         size: 24,
                       ),
                       SizedBox(width: 8),
@@ -81,7 +76,7 @@ class CityAnalyticsScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF14324A),
+                            color: AppTheme.headingOnDark,
                           ),
                         ),
                       ),
@@ -433,7 +428,7 @@ class CityAnalyticsScreen extends StatelessWidget {
             title,
             style: const TextStyle(
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1E384D),
+              color: AppTheme.headingOnLight,
             ),
           ),
           const SizedBox(height: 12),
