@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../complaint_store.dart';
+import '../services/firebase_service.dart';
 import 'login_screen.dart';
 import '../theme/app_theme.dart';
 
@@ -21,6 +24,52 @@ class _SignupScreenState extends State<SignupScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppTheme.danger),
     );
+  }
+
+  Future<void> _createAccount() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirm = _confirmController.text.trim();
+
+    if (name.isEmpty) {
+      _showError('Please enter your full name.');
+      return;
+    }
+    if (email.isEmpty || !email.contains('@')) {
+      _showError('Enter a valid email address.');
+      return;
+    }
+    if (password.length < 6) {
+      _showError('Password must be at least 6 characters.');
+      return;
+    }
+    if (password != confirm) {
+      _showError('Passwords do not match.');
+      return;
+    }
+
+    try {
+      await FirebaseService.registerUser(
+        name: name,
+        email: email,
+        password: password,
+        role: UserRole.citizen,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account created successfully.')),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    } on FirebaseAuthException catch (error) {
+      _showError(error.message ?? 'Unable to create account.');
+    } catch (_) {
+      _showError('Unable to create account. Please try again.');
+    }
   }
 
   @override
@@ -225,43 +274,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           width: double.infinity,
                           height: 54,
                           child: ElevatedButton(
-                            onPressed: () {
-                              final name = _nameController.text.trim();
-                              final email = _emailController.text.trim();
-                              final password = _passwordController.text.trim();
-                              final confirm = _confirmController.text.trim();
-                              if (name.isEmpty) {
-                                _showError('Please enter your full name.');
-                                return;
-                              }
-                              if (email.isEmpty || !email.contains('@')) {
-                                _showError('Enter a valid email address.');
-                                return;
-                              }
-                              if (password.length < 6) {
-                                _showError(
-                                  'Password must be at least 6 characters.',
-                                );
-                                return;
-                              }
-                              if (password != confirm) {
-                                _showError('Passwords do not match.');
-                                return;
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Account created successfully. Please login.',
-                                  ),
-                                ),
-                              );
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
-                                ),
-                              );
-                            },
+                            onPressed: _createAccount,
                             child: const Text(
                               'Create Account',
                               style: TextStyle(

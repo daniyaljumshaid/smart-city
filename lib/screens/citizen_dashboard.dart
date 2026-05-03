@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../complaint_store.dart';
+import '../services/firebase_service.dart';
 import 'analysis_dashboard.dart';
 import 'report_issue.dart';
 import 'location_screen.dart';
@@ -14,14 +15,20 @@ class CitizenDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recentComplaints = ComplaintStore.complaints.take(3).toList();
-    final total = ComplaintStore.complaints.length;
-    final active = ComplaintStore.complaints
-        .where((complaint) => complaint.status != 'Resolved')
-        .length;
-    final resolved = ComplaintStore.complaints
-        .where((complaint) => complaint.status == 'Resolved')
-        .length;
+    return StreamBuilder<List<Complaint>>(
+      stream: FirebaseService.streamComplaints(),
+      builder: (context, snapshot) {
+        final complaints = snapshot.data ?? const <Complaint>[];
+        return _buildDashboard(context, complaints);
+      },
+    );
+  }
+
+  Widget _buildDashboard(BuildContext context, List<Complaint> complaints) {
+    final recentComplaints = complaints.take(3).toList();
+    final total = complaints.length;
+    final active = complaints.where((complaint) => complaint.status != 'Resolved').length;
+    final resolved = complaints.where((complaint) => complaint.status == 'Resolved').length;
     final unreadCitizen = ComplaintStore.notifications
         .where(
           (notification) =>
@@ -85,7 +92,8 @@ class CitizenDashboard extends StatelessWidget {
             ],
           ),
           IconButton(
-            onPressed: () {
+            onPressed: () async {
+              await FirebaseService.signOut();
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -172,18 +180,14 @@ class CitizenDashboard extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 18),
-
               TextField(
                 decoration: InputDecoration(
                   hintText: 'Search complaints, areas, categories...',
                   prefixIcon: const Icon(Icons.search),
                 ),
               ),
-
               const SizedBox(height: 20),
-
               const Text(
                 'Quick Actions',
                 style: TextStyle(
@@ -192,9 +196,7 @@ class CitizenDashboard extends StatelessWidget {
                   color: AppTheme.headingOnLight,
                 ),
               ),
-
               const SizedBox(height: 12),
-
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -280,9 +282,7 @@ class CitizenDashboard extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(height: 22),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -307,7 +307,6 @@ class CitizenDashboard extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(height: 10),
               if (recentComplaints.isEmpty)
                 Container(

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 import '../complaint_store.dart';
+import '../services/firebase_service.dart';
 import 'complaint_tracking.dart';
 import 'login_screen.dart';
 import '../theme/app_theme.dart';
@@ -20,241 +21,254 @@ class _OfficerDashboardScreenState extends State<OfficerDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tasks = ComplaintStore.complaintsForOfficer();
-    final inProgress = tasks.where((c) => c.status == 'In Progress').length;
-    final pending = tasks.where((c) => c.status == 'Pending').length;
+    return StreamBuilder<List<Complaint>>(
+      stream: FirebaseService.streamComplaints(),
+      builder: (context, snapshot) {
+        final liveComplaints = snapshot.data;
+        if (liveComplaints != null) {
+          ComplaintStore.complaints
+            ..clear()
+            ..addAll(liveComplaints);
+        }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Government Officer Dashboard',
-          style: TextStyle(color: AppTheme.headingOnLight),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ComplaintTrackingScreen(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.track_changes_rounded),
-            tooltip: 'Open tracker',
-          ),
-          IconButton(
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
-            },
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Logout',
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _summaryCard(
-                      title: 'Assigned Tasks',
-                      value: '${tasks.length}',
-                      icon: Icons.assignment_rounded,
-                      color: const Color(0xFF2B87D1),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _summaryCard(
-                      title: 'In Progress',
-                      value: '$inProgress',
-                      icon: Icons.pending_actions_rounded,
-                      color: const Color(0xFFF08B2D),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _summaryCard(
-                      title: 'Pending',
-                      value: '$pending',
-                      icon: Icons.hourglass_bottom_rounded,
-                      color: const Color(0xFFD84D4D),
-                    ),
-                  ),
-                ],
-              ),
+        final tasks = ComplaintStore.complaintsForOfficer();
+        final inProgress = tasks.where((c) => c.status == 'In Progress').length;
+        final pending = tasks.where((c) => c.status == 'Pending').length;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(
+              'Government Officer Dashboard',
+              style: TextStyle(color: AppTheme.headingOnLight),
             ),
-            Expanded(
-              child: tasks.isEmpty
-                  ? Center(
-                      child: Container(
-                        margin: const EdgeInsets.all(20),
-                        padding: const EdgeInsets.all(20),
-                        decoration: AppTheme.mainHeadingDecoration(),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'No assigned tasks right now.',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.headingOnDark,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ComplaintTrackingScreen(),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.track_changes_rounded),
-                              label: const Text('Open tracking'),
-                            ),
-                          ],
+            centerTitle: true,
+            actions: [
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ComplaintTrackingScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.track_changes_rounded),
+                tooltip: 'Open tracker',
+              ),
+              IconButton(
+                onPressed: () async {
+                  await FirebaseService.signOut();
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false,
+                  );
+                },
+                icon: const Icon(Icons.logout_rounded),
+                tooltip: 'Logout',
+              ),
+            ],
+          ),
+          body: Container(
+            decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _summaryCard(
+                          title: 'Assigned Tasks',
+                          value: '${tasks.length}',
+                          icon: Icons.assignment_rounded,
+                          color: const Color(0xFF2B87D1),
                         ),
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                      itemCount: tasks.length,
-                      itemBuilder: (context, index) {
-                        final complaint = tasks[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.96),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '${complaint.id} • ${complaint.issueType}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16,
-                                      ),
-                                    ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _summaryCard(
+                          title: 'In Progress',
+                          value: '$inProgress',
+                          icon: Icons.pending_actions_rounded,
+                          color: const Color(0xFFF08B2D),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _summaryCard(
+                          title: 'Pending',
+                          value: '$pending',
+                          icon: Icons.hourglass_bottom_rounded,
+                          color: const Color(0xFFD84D4D),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: tasks.isEmpty
+                      ? Center(
+                          child: Container(
+                            margin: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.all(20),
+                            decoration: AppTheme.mainHeadingDecoration(),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'No assigned tasks right now.',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.headingOnDark,
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _statusColor(
-                                        complaint.status,
-                                      ).withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      complaint.status,
-                                      style: TextStyle(
-                                        color: _statusColor(complaint.status),
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(complaint.description),
-                              const SizedBox(height: 10),
-                              Wrap(
-                                runSpacing: 6,
-                                spacing: 10,
-                                children: [
-                                  _chip('Dept: ${complaint.department}'),
-                                  _chip(
-                                    'Urgency: ${(complaint.urgencyScore * 100).toStringAsFixed(0)}%',
-                                  ),
-                                  _chip('ETA: ${complaint.estimatedHours}h'),
-                                  _chip(
-                                    'Officer: ${complaint.assignedOfficer}',
-                                  ),
-                                ],
-                              ),
-                              if (complaint.imagePath != null) ...[
+                                ),
                                 const SizedBox(height: 10),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: kIsWeb
-                                      ? Container(
-                                          height: 120,
-                                          width: double.infinity,
-                                          color: const Color(0xFFF2F7FE),
-                                          alignment: Alignment.center,
-                                          child: const Text(
-                                            'Image preview is supported on mobile/desktop apps.',
-                                            style: TextStyle(
-                                              color: Color(0xFF4F677A),
-                                            ),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ComplaintTrackingScreen(),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.track_changes_rounded),
+                                  label: const Text('Open tracking'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                          itemCount: tasks.length,
+                          itemBuilder: (context, index) {
+                            final complaint = tasks[index];
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.96),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          '${complaint.id} • ${complaint.issueType}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 16,
                                           ),
-                                        )
-                                      : Image.file(
-                                          File(complaint.imagePath!),
-                                          height: 120,
-                                          width: double.infinity,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) {
-                                            return Container(
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _statusColor(
+                                            complaint.status,
+                                          ).withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          complaint.status,
+                                          style: TextStyle(
+                                            color: _statusColor(complaint.status),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(complaint.description),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    runSpacing: 6,
+                                    spacing: 10,
+                                    children: [
+                                      _chip('Dept: ${complaint.department}'),
+                                      _chip(
+                                        'Urgency: ${(complaint.urgencyScore * 100).toStringAsFixed(0)}%',
+                                      ),
+                                      _chip('ETA: ${complaint.estimatedHours}h'),
+                                      _chip(
+                                        'Officer: ${complaint.assignedOfficer}',
+                                      ),
+                                    ],
+                                  ),
+                                  if (complaint.imagePath != null) ...[
+                                    const SizedBox(height: 10),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: kIsWeb
+                                          ? Container(
                                               height: 120,
                                               width: double.infinity,
                                               color: const Color(0xFFF2F7FE),
                                               alignment: Alignment.center,
                                               child: const Text(
-                                                'Unable to load uploaded complaint image.',
+                                                'Image preview is supported on mobile/desktop apps.',
                                                 style: TextStyle(
                                                   color: Color(0xFF4F677A),
                                                 ),
                                               ),
-                                            );
-                                          },
-                                        ),
-                                ),
-                              ],
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: () => _openUpdateSheet(complaint),
-                                  icon: const Icon(Icons.fact_check_rounded),
-                                  label: const Text('Update Status & Evidence'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0F609B),
-                                    foregroundColor: Colors.white,
+                                            )
+                                          : Image.file(
+                                              File(complaint.imagePath!),
+                                              height: 120,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) {
+                                                return Container(
+                                                  height: 120,
+                                                  width: double.infinity,
+                                                  color: const Color(0xFFF2F7FE),
+                                                  alignment: Alignment.center,
+                                                  child: const Text(
+                                                    'Unable to load uploaded complaint image.',
+                                                    style: TextStyle(
+                                                      color: Color(0xFF4F677A),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => _openUpdateSheet(complaint),
+                                      icon: const Icon(Icons.fact_check_rounded),
+                                      label: const Text('Update Status & Evidence'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF0F609B),
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -426,7 +440,7 @@ class _OfficerDashboardScreenState extends State<OfficerDashboardScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           final note = noteController.text.trim().isEmpty
                               ? 'Task updated by officer.'
                               : noteController.text.trim();
@@ -444,6 +458,10 @@ class _OfficerDashboardScreenState extends State<OfficerDashboardScreen> {
                                 : evidencePath,
                             etaHours: eta,
                             assignedOfficer: officerController.text.trim(),
+                          );
+
+                          await FirebaseService.saveComplaint(
+                            complaint: complaint,
                           );
 
                           setState(() {});

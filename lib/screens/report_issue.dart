@@ -5,6 +5,7 @@ import 'dart:io';
 import 'location_screen.dart';
 import '../complaint_store.dart';
 import '../services/ai_engine.dart';
+import '../services/firebase_service.dart';
 import 'my_complaints_screen.dart';
 import '../theme/app_theme.dart';
 
@@ -74,7 +75,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     );
 
     if (shouldSubmit == true && mounted) {
-      _submitComplaint();
+      await _submitComplaint();
     }
   }
 
@@ -128,7 +129,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     return (result.etaHours * 1.45).round();
   }
 
-  void _submitComplaint() {
+  Future<void> _submitComplaint() async {
     if (_locationText == 'Not Selected') {
       showError('Please select location');
       return;
@@ -176,6 +177,21 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     );
 
     ComplaintStore.addComplaint(complaint);
+
+    try {
+      await FirebaseService.saveComplaint(
+        complaint: complaint,
+        localImagePath: _photoPath.isEmpty ? null : _photoPath,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Saved locally, but Firebase sync failed.'),
+          ),
+        );
+      }
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

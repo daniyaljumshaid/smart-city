@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../complaint_store.dart';
+import '../services/firebase_service.dart';
 import 'ai_city_insights.dart';
 import 'city_analytics.dart';
 import 'complaint_tracking.dart';
@@ -27,101 +28,114 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final complaints = ComplaintStore.complaints;
-    final total = complaints.length;
-    final resolved = complaints.where((c) => c.status == 'Resolved').length;
-    final resolvedRate = total == 0 ? 0 : ((resolved / total) * 100).round();
-    final avgFixTime = _averageFixHours(complaints);
-    final departmentStats = _departmentPerformance(complaints);
+    return StreamBuilder<List<Complaint>>(
+      stream: FirebaseService.streamComplaints(),
+      builder: (context, snapshot) {
+        final liveComplaints = snapshot.data;
+        if (liveComplaints != null) {
+          ComplaintStore.complaints
+            ..clear()
+            ..addAll(liveComplaints);
+        }
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text(
-          'Admin Dashboard',
-          style: TextStyle(color: AppTheme.headingOnLight),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
-            },
-            icon: const Icon(Icons.logout_rounded, color: Colors.black),
-            tooltip: 'Logout',
+        final complaints = ComplaintStore.complaints;
+        final total = complaints.length;
+        final resolved = complaints.where((c) => c.status == 'Resolved').length;
+        final resolvedRate = total == 0 ? 0 : ((resolved / total) * 100).round();
+        final avgFixTime = _averageFixHours(complaints);
+        final departmentStats = _departmentPerformance(complaints);
+
+        return Scaffold(
+          backgroundColor: AppTheme.background,
+          appBar: AppBar(
+            title: const Text(
+              'Admin Dashboard',
+              style: TextStyle(color: AppTheme.headingOnLight),
+            ),
+            centerTitle: true,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            actions: [
+              IconButton(
+                onPressed: () async {
+                  await FirebaseService.signOut();
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false,
+                  );
+                },
+                icon: const Icon(Icons.logout_rounded, color: Colors.black),
+                tooltip: 'Logout',
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 880;
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 880;
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _titleStrip(),
-                const SizedBox(height: 12),
-                _headerBar(),
-                const SizedBox(height: 12),
-                _tabStrip(context),
-                const SizedBox(height: 14),
-                if (_searchQuery.isNotEmpty) ...[
-                  _searchResultsCard(_matchingComplaints(_searchQuery)),
-                  const SizedBox(height: 14),
-                ],
-                if (isNarrow) ...[
-                  _cityOverviewCard(
-                    total: total,
-                    resolvedRate: resolvedRate,
-                    avgFixTime: avgFixTime,
-                  ),
-                  const SizedBox(height: 10),
-                  _aiInsightsCard(),
-                ] else
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _cityOverviewCard(
-                          total: total,
-                          resolvedRate: resolvedRate,
-                          avgFixTime: avgFixTime,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(child: _aiInsightsCard()),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _titleStrip(),
+                    const SizedBox(height: 12),
+                    _headerBar(),
+                    const SizedBox(height: 12),
+                    _tabStrip(context),
+                    const SizedBox(height: 14),
+                    if (_searchQuery.isNotEmpty) ...[
+                      _searchResultsCard(_matchingComplaints(_searchQuery)),
+                      const SizedBox(height: 14),
                     ],
-                  ),
-                const SizedBox(height: 14),
-                if (isNarrow) ...[
-                  _heatMapCard(context),
-                  const SizedBox(height: 10),
-                  _departmentCard(departmentStats),
-                ] else
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 6, child: _heatMapCard(context)),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 5,
-                        child: _departmentCard(departmentStats),
+                    if (isNarrow) ...[
+                      _cityOverviewCard(
+                        total: total,
+                        resolvedRate: resolvedRate,
+                        avgFixTime: avgFixTime,
                       ),
-                    ],
-                  ),
-              ],
-            );
-          },
-        ),
-      ),
+                      const SizedBox(height: 10),
+                      _aiInsightsCard(),
+                    ] else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _cityOverviewCard(
+                              total: total,
+                              resolvedRate: resolvedRate,
+                              avgFixTime: avgFixTime,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(child: _aiInsightsCard()),
+                        ],
+                      ),
+                    const SizedBox(height: 14),
+                    if (isNarrow) ...[
+                      _heatMapCard(context),
+                      const SizedBox(height: 10),
+                      _departmentCard(departmentStats),
+                    ] else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 6, child: _heatMapCard(context)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 5,
+                            child: _departmentCard(departmentStats),
+                          ),
+                        ],
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -698,83 +712,138 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   void _showUsersModal(BuildContext context) {
-    final complaints = ComplaintStore.complaints;
-    final citizens = <String>{};
-    final officers = <String>{};
-
-    for (var complaint in complaints) {
-      citizens.add(complaint.citizenName);
-      if (complaint.assignedOfficer != 'Unassigned') {
-        officers.add(complaint.assignedOfficer);
-      }
-    }
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final deptController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('App Users'),
-        content: SizedBox(
-          width: 400,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Citizens:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const SizedBox(height: 8),
-                if (citizens.isEmpty)
-                  const Text('No citizens found')
-                else
-                  ...citizens.map(
-                    (citizen) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0F4F9),
-                          borderRadius: BorderRadius.circular(4),
+      builder: (context) => StreamBuilder<List<Map<String, dynamic>>>(
+        stream: FirebaseService.streamUsers(),
+        builder: (context, snapshot) {
+          final users = snapshot.data ?? [];
+          final citizens = users.where((u) => (u['role'] as String?) == UserRole.citizen).toList();
+          final officers = users.where((u) => (u['role'] as String?) == UserRole.officer).toList();
+
+          return AlertDialog(
+            title: const Text('Manage Users'),
+            content: SizedBox(
+              width: 560,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Create Government Officer', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    TextField(controller: nameController, decoration: const InputDecoration(hintText: 'Full name')),
+                    const SizedBox(height: 8),
+                    TextField(controller: emailController, decoration: const InputDecoration(hintText: 'Email')),
+                    const SizedBox(height: 8),
+                    TextField(controller: deptController, decoration: const InputDecoration(hintText: 'Department')),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: () async {
+                            final name = nameController.text.trim();
+                            final email = emailController.text.trim();
+                            final dept = deptController.text.trim();
+                            if (name.isEmpty || email.isEmpty || !email.contains('@')) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter valid name and email')));
+                              return;
+                            }
+                            try {
+                              await FirebaseService.createOfficerProfile(name: name, email: email, department: dept.isEmpty ? 'General' : dept);
+                              nameController.clear();
+                              emailController.clear();
+                              deptController.clear();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Officer profile created (pending auth).')));
+                              }
+                            } catch (e) {
+                              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                            }
+                          },
+                          child: const Text('Create Officer Profile'),
                         ),
-                        child: Text('• $citizen'),
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Government Officers:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const SizedBox(height: 8),
-                if (officers.isEmpty)
-                  const Text('No officers assigned')
-                else
-                  ...officers.map(
-                    (officer) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0F4F9),
-                          borderRadius: BorderRadius.circular(4),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text('Note: Auth accounts must be created via admin console or Cloud Function.', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                         ),
-                        child: Text('• $officer'),
-                      ),
+                      ],
                     ),
-                  ),
-              ],
+                    const SizedBox(height: 16),
+                    const Text('Government Officers', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    if (officers.isEmpty) const Text('No officers found') else ...officers.map((u) {
+                      final uid = u['uid'] as String? ?? '';
+                      return ListTile(
+                        title: Text(u['name'] as String? ?? u['email'] as String? ?? 'Officer'),
+                        subtitle: Text('${u['email'] ?? ''} • ${u['department'] ?? ''}'),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                          onPressed: () async {
+                            final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
+                              title: const Text('Confirm delete'),
+                              content: const Text('Delete this officer profile? This removes the Firestore profile but will not remove an Auth account.'),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+                              ],
+                            ));
+                            if (ok == true) {
+                              try {
+                                await FirebaseService.deleteUserProfile(uid);
+                                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Officer profile deleted')));
+                              } catch (e) {
+                                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                              }
+                            }
+                          },
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 12),
+                    const Text('Citizens', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    if (citizens.isEmpty) const Text('No citizens found') else ...citizens.map((u) {
+                      final uid = u['uid'] as String? ?? '';
+                      return ListTile(
+                        title: Text(u['name'] as String? ?? u['email'] as String? ?? 'Citizen'),
+                        subtitle: Text(u['email'] ?? ''),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                          onPressed: () async {
+                            final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
+                              title: const Text('Confirm delete'),
+                              content: const Text('Delete this citizen profile? This removes the Firestore profile but will not remove an Auth account.'),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+                              ],
+                            ));
+                            if (ok == true) {
+                              try {
+                                await FirebaseService.deleteUserProfile(uid);
+                                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Citizen profile deleted')));
+                              } catch (e) {
+                                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                              }
+                            }
+                          },
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+            ],
+          );
+        },
       ),
     );
   }
